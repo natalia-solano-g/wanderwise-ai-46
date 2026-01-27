@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Header, Hero } from '@/components/Header';
 import { WorldMap } from '@/components/WorldMap';
 import { TripForm } from '@/components/TripForm';
 import { ItineraryView } from '@/components/ItineraryView';
 import { City, TripDetails, ItineraryData } from '@/types/voyager';
-import { generateMockItinerary } from '@/data/mockItinerary';
+import { generateItinerary, getFallbackItinerary } from '@/services/voyagerApi';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [itinerary, setItinerary] = useState<ItineraryData | null>(null);
-  const [loadingStep, setLoadingStep] = useState(0);
 
   const handleCitySelect = (city: City) => {
     setSelectedCity(city);
@@ -23,29 +23,27 @@ const Index = () => {
 
   const handleFormSubmit = async (details: TripDetails) => {
     setIsLoading(true);
-    setLoadingStep(0);
 
-    // Simulate loading steps
-    const stepInterval = setInterval(() => {
-      setLoadingStep((prev) => Math.min(prev + 1, 4));
-    }, 2000);
+    try {
+      const data = await generateItinerary(details);
+      setItinerary(data);
+      setSelectedCity(null);
+    } catch (error) {
+      console.error('Failed to generate itinerary:', error);
+      
+      toast({
+        title: 'Could not reach n8n webhook',
+        description: 'Using demo data instead. Make sure your n8n workflow is in test mode.',
+        variant: 'destructive',
+      });
 
-    // Simulate API call delay (in production, call n8n webhook)
-    await new Promise((resolve) => setTimeout(resolve, 8000));
-
-    clearInterval(stepInterval);
-
-    // Generate mock itinerary
-    const mockData = generateMockItinerary(
-      details.city,
-      details.country,
-      details.numberOfDays,
-      details.month
-    );
-
-    setItinerary(mockData);
-    setIsLoading(false);
-    setSelectedCity(null);
+      // Fall back to mock data
+      const fallbackData = getFallbackItinerary(details);
+      setItinerary(fallbackData);
+      setSelectedCity(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBackToMap = () => {
