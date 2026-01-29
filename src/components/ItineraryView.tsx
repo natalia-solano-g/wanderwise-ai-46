@@ -14,12 +14,14 @@ interface ItineraryViewProps {
 }
 
 export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
+  const { city, country, days, month } = data.chat.context;
+  
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       role: 'assistant',
-      content: `Hi! I'm your Voyager assistant. I've prepared a ${data.numberOfDays}-day itinerary for your trip to ${data.city}. Feel free to ask me anything about your trip!`,
+      content: data.chat.initial_message,
       timestamp: new Date(),
     },
   ]);
@@ -36,8 +38,8 @@ export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
       {/* Hero Section */}
       <div className="relative h-80 md:h-96 overflow-hidden">
         <img
-          src={`https://source.unsplash.com/1920x800/?${data.city},cityscape,landmark`}
-          alt={data.city}
+          src={`https://source.unsplash.com/1920x800/?${city},cityscape,landmark`}
+          alt={city}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 hero-overlay" />
@@ -60,14 +62,14 @@ export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
             className="text-card"
           >
             <h1 className="text-4xl md:text-6xl font-black uppercase text-shadow mb-2">
-              {data.city}
+              {city}
             </h1>
             <div className="flex items-center gap-4 text-lg font-semibold text-shadow">
-              <span>{data.numberOfDays} Days</span>
+              <span>{days} Days</span>
               <span>•</span>
-              <span>{data.month}</span>
+              <span>{month}</span>
               <span>•</span>
-              <span>{data.country}</span>
+              <span>{country}</span>
             </div>
           </motion.div>
         </div>
@@ -103,7 +105,7 @@ export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
         >
           {activeTab === 'overview' && <OverviewTab data={data} />}
           {activeTab === 'day-by-day' && <DayByDayTab itinerary={data.itinerary} />}
-          {activeTab === 'playlist' && <PlaylistTab songs={data.songs} city={data.city} />}
+          {activeTab === 'playlist' && <PlaylistTab playlist={data.playlist} city={city} />}
           {activeTab === 'chat' && (
             <ChatTab
               messages={chatMessages}

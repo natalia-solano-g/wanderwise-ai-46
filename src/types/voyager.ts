@@ -13,26 +13,57 @@ export interface TripDetails {
   preferences: string;
 }
 
+// New webhook response structure
 export interface WeatherData {
-  date: string;
   condition: string;
-  maxTempC: number;
-  minTempC: number;
-  humidity: number;
+  temp_min: string;
+  temp_max: string;
+  humidity: string;
   sunrise: string;
   sunset: string;
 }
 
-export interface ItineraryData {
+export interface PackingData {
   weather: WeatherData;
-  history: string;
-  news: string;
-  songs: string;
-  itinerary: string;
+  items: string[];
+}
+
+export interface OverviewData {
+  packing: PackingData;
+  historical_context: string;
+  current_news: string[];
+}
+
+export interface DayItinerary {
+  day: number;
+  title: string;
+  morning: string;
+  afternoon: string;
+  evening: string;
+}
+
+export interface PlaylistSong {
+  title: string;
+  artist: string;
+}
+
+export interface ChatContext {
   city: string;
   country: string;
-  numberOfDays: number;
+  days: number;
   month: string;
+}
+
+export interface ChatData {
+  initial_message: string;
+  context: ChatContext;
+}
+
+export interface ItineraryData {
+  overview: OverviewData;
+  itinerary: DayItinerary[];
+  playlist: PlaylistSong[];
+  chat: ChatData;
 }
 
 export interface ChatMessage {

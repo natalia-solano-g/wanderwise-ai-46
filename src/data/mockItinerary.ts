@@ -1,252 +1,285 @@
-import { ItineraryData } from '@/types/voyager';
+import { ItineraryData, DayItinerary, PlaylistSong } from '@/types/voyager';
+
+interface CityMockData {
+  weather: {
+    condition: string;
+    temp_min: string;
+    temp_max: string;
+    humidity: string;
+    sunrise: string;
+    sunset: string;
+  };
+  packingItems: string[];
+  historical_context: string;
+  current_news: string[];
+  playlist: PlaylistSong[];
+  itinerary: DayItinerary[];
+}
 
 export const generateMockItinerary = (city: string, country: string, numberOfDays: number, month: string): ItineraryData => {
-  const mockData: Record<string, Partial<ItineraryData>> = {
+  const mockData: Record<string, Partial<CityMockData>> = {
     'London': {
       weather: {
-        date: `2026-${month.toLowerCase()}-15`,
         condition: 'Partly cloudy with occasional showers',
-        maxTempC: 18,
-        minTempC: 11,
-        humidity: 75,
+        temp_min: '11°C',
+        temp_max: '18°C',
+        humidity: '75%',
         sunrise: '06:30 AM',
         sunset: '08:15 PM',
       },
-      history: `London, the capital of England and the United Kingdom, has a history spanning nearly two millennia. Founded as Londinium by the Romans around 43 AD, it became a major settlement and trading post. The city survived the Great Fire of 1666, which destroyed much of the medieval city, leading to Christopher Wren's masterpiece, St. Paul's Cathedral. During the Victorian era, London became the world's largest city and capital of the British Empire. Today, it seamlessly blends ancient history with modern innovation, from the Tower of London to the Shard.`,
-      news: `• The British Museum announces a new exhibit on Ancient Egyptian artifacts opening this ${month}\n• London's Elizabeth Line celebrates expansion with improved weekend services\n• West End sees record ticket sales for new musical productions\n• Borough Market launches sustainable food initiative with local vendors\n• Thames cleanup project removes 10 tonnes of plastic, celebrates milestone`,
-      songs: `1. London Calling - The Clash
-2. Waterloo Sunset - The Kinks
-3. A Day in the Life - The Beatles
-4. West End Girls - Pet Shop Boys
-5. Baker Street - Gerry Rafferty
-6. Up the Junction - Squeeze
-7. Primrose Hill - Madness
-8. Electric Avenue - Eddy Grant
-9. The Passenger - Iggy Pop
-10. London Bridge - Fergie
-11. Sunny Afternoon - The Kinks
-12. Life on Mars? - David Bowie
-13. Fashion - David Bowie
-14. London Loves - Blur
-15. Parklife - Blur
-16. Common People - Pulp
-17. A Town Called Malice - The Jam
-18. Ghost Town - The Specials
-19. Champagne Supernova - Oasis
-20. Don't Look Back in Anger - Oasis`,
-      itinerary: `## Day 1: Royal London & Historic Heart
-
-### Morning ☀️
-Start your London adventure at **Westminster Abbey**, where British monarchs have been crowned for centuries. The Gothic architecture and the Poets' Corner are not to be missed. Walk along the Thames to see **Big Ben** and the **Houses of Parliament**.
-
-### Afternoon 🌤️
-Cross Westminster Bridge for iconic photo opportunities, then head to **St. James's Park** for a peaceful stroll. Time your visit to **Buckingham Palace** for the Changing of the Guard ceremony (check schedule). End at **Trafalgar Square** and visit the **National Gallery** (free entry).
-
-### Evening 🌙
-Dinner in **Covent Garden** - try traditional British fare at Rules, London's oldest restaurant. Catch a West End show if time permits.
-
----
-
-## Day 2: Museums & Markets
-
-### Morning ☀️
-Explore the **British Museum** - home to the Rosetta Stone and Egyptian mummies. It's free and you could spend days here, so prioritize your must-sees.
-
-### Afternoon 🌤️
-Take the Tube to **Borough Market** for a gourmet lunch. Sample artisan cheeses, fresh oysters, and incredible street food. Walk across the **Millennium Bridge** for views of St. Paul's Cathedral.
-
-### Evening 🌙
-Visit **St. Paul's Cathedral** for Evensong (free) - an ethereal experience. Dinner in the **Barbican** area.
-
----
-
-## Day 3: Tower & East London
-
-### Morning ☀️
-Book early entry to the **Tower of London** to see the Crown Jewels before crowds arrive. Don't miss the Yeoman Warder tours - they're entertaining and informative.
-
-### Afternoon 🌤️
-Walk across **Tower Bridge** (you can do the glass floor experience). Explore the trendy **Shoreditch** neighborhood - street art, vintage shops, and coffee culture.
-
-### Evening 🌙
-Dinner at **Dishoom** for legendary Bombay-style cuisine. Walk along the South Bank for evening views.
-
----
-
-## Day 4: Royal Parks & Shopping
-
-### Morning ☀️
-Rent a bike or walk through **Hyde Park** and **Kensington Gardens**. Visit **Kensington Palace** where William and Kate reside.
-
-### Afternoon 🌤️
-Shopping on **Oxford Street** or for something more upscale, explore **Bond Street** and **Regent Street**. Tea at **Fortnum & Mason** is a quintessential experience.
-
-### Evening 🌙
-Farewell dinner in **Soho** - take your pick from world cuisines. End with drinks at a rooftop bar with city views.`,
+      packingItems: [
+        'Waterproof jacket or umbrella',
+        'Light layers for variable weather',
+        'Comfortable walking shoes',
+        'Power adapter (UK Type G)',
+        'Small daypack for daily adventures',
+      ],
+      historical_context: `London, the capital of England and the United Kingdom, has a history spanning nearly two millennia. Founded as Londinium by the Romans around 43 AD, it became a major settlement and trading post. The city survived the Great Fire of 1666, which destroyed much of the medieval city, leading to Christopher Wren's masterpiece, St. Paul's Cathedral. During the Victorian era, London became the world's largest city and capital of the British Empire.`,
+      current_news: [
+        `The British Museum announces a new exhibit on Ancient Egyptian artifacts opening this ${month}`,
+        "London's Elizabeth Line celebrates expansion with improved weekend services",
+        'West End sees record ticket sales for new musical productions',
+        'Borough Market launches sustainable food initiative with local vendors',
+        'Thames cleanup project removes 10 tonnes of plastic, celebrates milestone',
+      ],
+      playlist: [
+        { title: 'London Calling', artist: 'The Clash' },
+        { title: 'Waterloo Sunset', artist: 'The Kinks' },
+        { title: 'A Day in the Life', artist: 'The Beatles' },
+        { title: 'West End Girls', artist: 'Pet Shop Boys' },
+        { title: 'Baker Street', artist: 'Gerry Rafferty' },
+        { title: 'Life on Mars?', artist: 'David Bowie' },
+        { title: 'Parklife', artist: 'Blur' },
+        { title: 'Common People', artist: 'Pulp' },
+        { title: "Don't Look Back in Anger", artist: 'Oasis' },
+        { title: 'London Loves', artist: 'Blur' },
+      ],
+      itinerary: [
+        {
+          day: 1,
+          title: 'Royal London & Historic Heart',
+          morning: 'Start your London adventure at Westminster Abbey, where British monarchs have been crowned for centuries. Walk along the Thames to see Big Ben and the Houses of Parliament.',
+          afternoon: 'Cross Westminster Bridge for iconic photo opportunities, then head to St. James\'s Park for a peaceful stroll. Time your visit to Buckingham Palace for the Changing of the Guard.',
+          evening: 'Dinner in Covent Garden - try traditional British fare at Rules, London\'s oldest restaurant. Catch a West End show if time permits.',
+        },
+        {
+          day: 2,
+          title: 'Museums & Markets',
+          morning: 'Explore the British Museum - home to the Rosetta Stone and Egyptian mummies. It\'s free and incredible.',
+          afternoon: 'Take the Tube to Borough Market for a gourmet lunch. Sample artisan cheeses, fresh oysters, and incredible street food.',
+          evening: 'Visit St. Paul\'s Cathedral for Evensong (free) - an ethereal experience. Dinner in the Barbican area.',
+        },
+        {
+          day: 3,
+          title: 'Tower & East London',
+          morning: 'Book early entry to the Tower of London to see the Crown Jewels before crowds arrive. Don\'t miss the Yeoman Warder tours.',
+          afternoon: 'Walk across Tower Bridge (you can do the glass floor experience). Explore the trendy Shoreditch neighborhood.',
+          evening: 'Dinner at Dishoom for legendary Bombay-style cuisine. Walk along the South Bank for evening views.',
+        },
+        {
+          day: 4,
+          title: 'Royal Parks & Shopping',
+          morning: 'Rent a bike or walk through Hyde Park and Kensington Gardens. Visit Kensington Palace.',
+          afternoon: 'Shopping on Oxford Street or for something more upscale, explore Bond Street. Tea at Fortnum & Mason is a quintessential experience.',
+          evening: 'Farewell dinner in Soho - take your pick from world cuisines. End with drinks at a rooftop bar with city views.',
+        },
+      ],
     },
     'Paris': {
       weather: {
-        date: `2026-${month.toLowerCase()}-15`,
         condition: 'Mild and sunny with light clouds',
-        maxTempC: 22,
-        minTempC: 14,
-        humidity: 65,
+        temp_min: '14°C',
+        temp_max: '22°C',
+        humidity: '65%',
         sunrise: '07:00 AM',
         sunset: '08:45 PM',
       },
-      history: `Paris, the City of Light, has been a major settlement since the 3rd century BC when it was founded by a Gallic tribe called the Parisii. The city flourished in the Middle Ages as a center of learning with the establishment of the Sorbonne. The French Revolution of 1789 transformed Paris and France forever. Baron Haussmann's 19th-century renovation gave Paris its iconic wide boulevards and uniform buildings. The city has been home to countless artists, writers, and thinkers, from Monet to Hemingway.`,
-      news: `• Louvre announces extended evening hours for summer visitors\n• New metro line connects major tourist attractions\n• Paris Olympics legacy: sports venues now open to public\n• Seine swimming officially open after historic cleanup effort\n• French pastry week celebrates city's best bakeries`,
-      songs: `1. La Vie en Rose - Édith Piaf
-2. Sous le ciel de Paris - Yves Montand
-3. Je t'aime... moi non plus - Serge Gainsbourg
-4. Champs-Élysées - Joe Dassin
-5. Paris - ZAZ
-6. La Bohème - Charles Aznavour
-7. Sympathique - Pink Martini
-8. Midnight in Paris - Si Tu Vois Ma Mère
-9. Paris s'éveille - Jacques Dutronc
-10. Non, je ne regrette rien - Édith Piaf
-11. Les Champs-Élysées - Joe Dassin
-12. Paris, Texas - Ry Cooder
-13. I Love Paris - Cole Porter
-14. April in Paris - Ella Fitzgerald
-15. An American in Paris - Gershwin
-16. Sous les ponts de Paris - Dean Martin
-17. Parisienne Walkways - Gary Moore
-18. Paris - The Chainsmokers
-19. Paris - Friendly Fires
-20. A Night in Paris - Can`,
-      itinerary: `## Day 1: Iconic Paris
-
-### Morning ☀️
-Start early at the **Eiffel Tower** - book skip-the-line tickets. Take the elevator to the summit for breathtaking views. Walk through the **Champ de Mars** gardens.
-
-### Afternoon 🌤️
-Stroll along the **Seine** to the **Musée d'Orsay** for Impressionist masterpieces. Cross to the **Tuileries Garden** for a peaceful break.
-
-### Evening 🌙
-Dinner cruise on the Seine or dine at a classic bistro in **Saint-Germain-des-Prés**.`,
+      packingItems: [
+        'Light layers for mild weather',
+        'Comfortable walking shoes',
+        'Sunglasses and sun hat',
+        'Power adapter (EU Type C/E)',
+        'Small daypack for daily adventures',
+      ],
+      historical_context: `Paris, the City of Light, has been a major settlement since the 3rd century BC when it was founded by a Gallic tribe called the Parisii. The city flourished in the Middle Ages as a center of learning with the establishment of the Sorbonne. Baron Haussmann's 19th-century renovation gave Paris its iconic wide boulevards and uniform buildings.`,
+      current_news: [
+        'Louvre announces extended evening hours for summer visitors',
+        'New metro line connects major tourist attractions',
+        'Paris Olympics legacy: sports venues now open to public',
+        'Seine swimming officially open after historic cleanup effort',
+        'French pastry week celebrates city\'s best bakeries',
+      ],
+      playlist: [
+        { title: 'La Vie en Rose', artist: 'Édith Piaf' },
+        { title: 'Sous le ciel de Paris', artist: 'Yves Montand' },
+        { title: 'Champs-Élysées', artist: 'Joe Dassin' },
+        { title: 'Paris', artist: 'ZAZ' },
+        { title: 'La Bohème', artist: 'Charles Aznavour' },
+        { title: 'Non, je ne regrette rien', artist: 'Édith Piaf' },
+        { title: 'I Love Paris', artist: 'Cole Porter' },
+        { title: 'April in Paris', artist: 'Ella Fitzgerald' },
+        { title: 'Midnight in Paris', artist: 'Sidney Bechet' },
+        { title: 'Paris s\'éveille', artist: 'Jacques Dutronc' },
+      ],
+      itinerary: [
+        {
+          day: 1,
+          title: 'Iconic Paris',
+          morning: 'Start early at the Eiffel Tower - book skip-the-line tickets. Take the elevator to the summit for breathtaking views.',
+          afternoon: 'Stroll along the Seine to the Musée d\'Orsay for Impressionist masterpieces. Cross to the Tuileries Garden for a peaceful break.',
+          evening: 'Dinner cruise on the Seine or dine at a classic bistro in Saint-Germain-des-Prés.',
+        },
+      ],
     },
     'Tokyo': {
       weather: {
-        date: `2026-${month.toLowerCase()}-15`,
         condition: 'Clear skies with mild humidity',
-        maxTempC: 25,
-        minTempC: 18,
-        humidity: 70,
+        temp_min: '18°C',
+        temp_max: '25°C',
+        humidity: '70%',
         sunrise: '05:45 AM',
         sunset: '06:30 PM',
       },
-      history: `Tokyo, originally called Edo, was a small fishing village until it became the seat of the Tokugawa shogunate in 1603. For over 250 years, Edo grew into one of the world's largest cities. When Emperor Meiji moved from Kyoto to Edo in 1868, it was renamed Tokyo ("Eastern Capital"). Despite devastating earthquakes and WWII bombing, Tokyo rebuilt itself into a futuristic megalopolis. Today it's a unique blend of ultra-modern technology and ancient temples.`,
-      news: `• Tokyo Tower celebrates anniversary with special illuminations\n• New bullet train route reduces travel time to Osaka\n• Shibuya Crossing gets pedestrian-friendly upgrades\n• Traditional craft workshops surge in popularity with tourists\n• Cherry blossom festival dates announced for this season`,
-      songs: `1. Sukiyaki - Kyu Sakamoto
-2. Plastic Love - Mariya Takeuchi
-3. First Love - Utada Hikaru
-4. Tokyo Drift - Teriyaki Boyz
-5. Ride on Time - Tatsuro Yamashita
-6. Tokyo - Imagine Dragons
-7. Merry Christmas Mr. Lawrence - Ryuichi Sakamoto
-8. Big in Japan - Alphaville
-9. Turning Japanese - The Vapors
-10. Shibuya-Kei - Various Artists
-11. Tokyo Nights - Miki Matsubara
-12. 4:00 AM - Taeko Ohnuki
-13. Stay With Me - Miki Matsubara
-14. City Pop Tokyo - Various
-15. True Romance - Wada Kanako
-16. Silent Siren - Fujiya
-17. Summer Vacation - Tube
-18. Tokyo Girl - Perfume
-19. Heavy Rotation - AKB48
-20. Lemon - Kenshi Yonezu`,
-      itinerary: `## Day 1: Traditional Tokyo
-
-### Morning ☀️
-Visit **Senso-ji Temple** in Asakusa, Tokyo's oldest temple. Explore **Nakamise Shopping Street** for traditional snacks and souvenirs.
-
-### Afternoon 🌤️
-Take a water bus down the **Sumida River** to modern **Odaiba**. Visit teamLab or enjoy the futuristic architecture.
-
-### Evening 🌙
-Experience **Shibuya Crossing** at night, then dinner in **Shinjuku** - try an izakaya for authentic Japanese dining.`,
+      packingItems: [
+        'Comfortable walking shoes',
+        'Light breathable clothing',
+        'Pocket WiFi or SIM card recommended',
+        'Small towel (for summer)',
+        'Cash (many places don\'t accept cards)',
+      ],
+      historical_context: `Tokyo, originally called Edo, was a small fishing village until it became the seat of the Tokugawa shogunate in 1603. When Emperor Meiji moved from Kyoto to Edo in 1868, it was renamed Tokyo ("Eastern Capital"). Despite devastating earthquakes and WWII bombing, Tokyo rebuilt itself into a futuristic megalopolis.`,
+      current_news: [
+        'Tokyo Tower celebrates anniversary with special illuminations',
+        'New bullet train route reduces travel time to Osaka',
+        'Shibuya Crossing gets pedestrian-friendly upgrades',
+        'Traditional craft workshops surge in popularity with tourists',
+        'Cherry blossom festival dates announced for this season',
+      ],
+      playlist: [
+        { title: 'Sukiyaki', artist: 'Kyu Sakamoto' },
+        { title: 'Plastic Love', artist: 'Mariya Takeuchi' },
+        { title: 'First Love', artist: 'Utada Hikaru' },
+        { title: 'Tokyo Drift', artist: 'Teriyaki Boyz' },
+        { title: 'Ride on Time', artist: 'Tatsuro Yamashita' },
+        { title: 'Stay With Me', artist: 'Miki Matsubara' },
+        { title: 'Tokyo Girl', artist: 'Perfume' },
+        { title: 'Lemon', artist: 'Kenshi Yonezu' },
+        { title: 'City Pop Tokyo', artist: 'Various' },
+        { title: 'Merry Christmas Mr. Lawrence', artist: 'Ryuichi Sakamoto' },
+      ],
+      itinerary: [
+        {
+          day: 1,
+          title: 'Traditional Tokyo',
+          morning: 'Visit Senso-ji Temple in Asakusa, Tokyo\'s oldest temple. Explore Nakamise Shopping Street for traditional snacks.',
+          afternoon: 'Take a water bus down the Sumida River to modern Odaiba. Visit teamLab or enjoy the futuristic architecture.',
+          evening: 'Experience Shibuya Crossing at night, then dinner in Shinjuku - try an izakaya for authentic Japanese dining.',
+        },
+      ],
     },
   };
 
   // Get city-specific data or generate generic
-  const cityData = mockData[city] || {
-    weather: {
-      date: `2026-${month.toLowerCase()}-15`,
-      condition: 'Pleasant weather expected',
-      maxTempC: 24,
-      minTempC: 16,
-      humidity: 60,
-      sunrise: '06:30 AM',
-      sunset: '07:30 PM',
-    },
-    history: `${city} is a vibrant destination with a rich cultural heritage. The city has evolved through centuries of history, blending traditional charm with modern innovation. Visitors will find a unique atmosphere that reflects the local culture and traditions of ${country}.`,
-    news: `• Local festivals and events happening throughout ${month}\n• New attractions opening for tourists\n• Cultural exhibitions showcasing local heritage\n• Transportation improvements for visitors\n• Sustainable tourism initiatives launched`,
-    songs: `1. Local Favorite - Traditional Artist
-2. City Anthem - Popular Band
-3. Cultural Melody - Folk Singer
-4. Modern Hit - Contemporary Artist
-5. Classic Tune - Legendary Musician
-6. Dance Track - Local DJ
-7. Romantic Ballad - Singer
-8. Festival Song - Band
-9. Street Music - Performer
-10. Historical Piece - Orchestra
-11. Pop Hit - Star
-12. Rock Classic - Band
-13. Jazz Standard - Ensemble
-14. Electronic Beat - Producer
-15. Acoustic Session - Songwriter
-16. Live Performance - Artist
-17. Studio Recording - Musician
-18. Remix Version - DJ
-19. Acoustic Cover - Singer
-20. Original Composition - Composer`,
-    itinerary: `## Day 1: Exploring ${city}
-
-### Morning ☀️
-Start your day at the historic city center. Visit the main landmarks and soak in the local atmosphere.
-
-### Afternoon 🌤️
-Explore local markets and try authentic cuisine. Visit museums or galleries showcasing local art and history.
-
-### Evening 🌙
-Enjoy dinner at a recommended restaurant and experience the nightlife.`,
-  };
+  const cityData = mockData[city] || generateGenericCityData(city, country, month);
 
   // Generate additional days if needed
-  let fullItinerary = cityData.itinerary || '';
-  for (let day = 2; day <= numberOfDays; day++) {
-    if (!fullItinerary.includes(`Day ${day}`)) {
-      fullItinerary += `
-
----
-
-## Day ${day}: Continued Exploration
-
-### Morning ☀️
-Discover more hidden gems and local favorites. Visit neighborhoods off the tourist path.
-
-### Afternoon 🌤️
-Relax at a local café or park. Do some shopping for unique souvenirs.
-
-### Evening 🌙
-Try a different cuisine or return to a favorite spot. Enjoy the city at night.`;
-    }
+  const itinerary = [...(cityData.itinerary || [])];
+  for (let day = itinerary.length + 1; day <= numberOfDays; day++) {
+    itinerary.push({
+      day,
+      title: `Day ${day} Adventures`,
+      morning: 'Discover more hidden gems and local favorites. Visit neighborhoods off the tourist path.',
+      afternoon: 'Relax at a local café or park. Do some shopping for unique souvenirs.',
+      evening: 'Try a different cuisine or return to a favorite spot. Enjoy the city at night.',
+    });
   }
 
   return {
-    weather: cityData.weather!,
-    history: cityData.history!,
-    news: cityData.news!,
-    songs: cityData.songs!,
-    itinerary: fullItinerary,
-    city,
-    country,
-    numberOfDays,
-    month,
+    overview: {
+      packing: {
+        weather: cityData.weather || {
+          condition: 'Pleasant weather expected',
+          temp_min: '16°C',
+          temp_max: '24°C',
+          humidity: '60%',
+          sunrise: '06:30 AM',
+          sunset: '07:30 PM',
+        },
+        items: cityData.packingItems || [
+          'Light layers - t-shirts and a light jacket',
+          'Comfortable walking shoes',
+          'Power adapter for your electronics',
+          'Small daypack for daily adventures',
+        ],
+      },
+      historical_context: cityData.historical_context || `${city} is a vibrant destination with a rich cultural heritage. The city has evolved through centuries of history, blending traditional charm with modern innovation.`,
+      current_news: cityData.current_news || [
+        `Local festivals and events happening throughout ${month}`,
+        'New attractions opening for tourists',
+        'Cultural exhibitions showcasing local heritage',
+        'Transportation improvements for visitors',
+        'Sustainable tourism initiatives launched',
+      ],
+    },
+    itinerary,
+    playlist: cityData.playlist || [
+      { title: 'Local Favorite', artist: 'Traditional Artist' },
+      { title: 'City Anthem', artist: 'Popular Band' },
+      { title: 'Cultural Melody', artist: 'Folk Singer' },
+      { title: 'Modern Hit', artist: 'Contemporary Artist' },
+      { title: 'Classic Tune', artist: 'Legendary Musician' },
+    ],
+    chat: {
+      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${numberOfDays}-day itinerary for your trip to ${city}. Feel free to ask me anything about your trip!`,
+      context: {
+        city,
+        country,
+        days: numberOfDays,
+        month,
+      },
+    },
   };
 };
+
+function generateGenericCityData(city: string, country: string, month: string): Partial<CityMockData> {
+  return {
+    weather: {
+      condition: 'Pleasant weather expected',
+      temp_min: '16°C',
+      temp_max: '24°C',
+      humidity: '60%',
+      sunrise: '06:30 AM',
+      sunset: '07:30 PM',
+    },
+    packingItems: [
+      'Light layers - t-shirts and a light jacket',
+      'Comfortable walking shoes',
+      'Power adapter for your electronics',
+      'Small daypack for daily adventures',
+    ],
+    historical_context: `${city} is a vibrant destination with a rich cultural heritage. The city has evolved through centuries of history, blending traditional charm with modern innovation.`,
+    current_news: [
+      `Local festivals and events happening throughout ${month}`,
+      'New attractions opening for tourists',
+      'Cultural exhibitions showcasing local heritage',
+      'Transportation improvements for visitors',
+      'Sustainable tourism initiatives launched',
+    ],
+    playlist: [
+      { title: 'Local Favorite', artist: 'Traditional Artist' },
+      { title: 'City Anthem', artist: 'Popular Band' },
+      { title: 'Cultural Melody', artist: 'Folk Singer' },
+      { title: 'Modern Hit', artist: 'Contemporary Artist' },
+      { title: 'Classic Tune', artist: 'Legendary Musician' },
+    ],
+    itinerary: [
+      {
+        day: 1,
+        title: `Exploring ${city}`,
+        morning: 'Start your day at the historic city center. Visit the main landmarks and soak in the local atmosphere.',
+        afternoon: 'Explore local markets and try authentic cuisine. Visit museums or galleries showcasing local art and history.',
+        evening: 'Enjoy dinner at a recommended restaurant and experience the nightlife.',
+      },
+    ],
+  };
+}

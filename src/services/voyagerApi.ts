@@ -1,35 +1,42 @@
-import { TripDetails, ItineraryData, WeatherData } from '@/types/voyager';
-import { generateMockItinerary } from '@/data/mockItinerary';
+import { TripDetails, ItineraryData, WeatherData, OverviewData, DayItinerary, PlaylistSong, ChatData } from '@/types/voyager';
 
 const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook-test/voyager';
 
-interface N8nWeatherResponse {
-  date: string;
-  condition: string;
-  max_temp_c: number;
-  min_temp_c: number;
-  humidity: number;
-  sunrise: string;
-  sunset: string;
-}
-
 interface N8nResponse {
-  weather: N8nWeatherResponse;
-  history: string;
-  news: string;
-  songs: string;
-  itinerary: string;
-}
-
-function transformWeather(weather: N8nWeatherResponse): WeatherData {
-  return {
-    date: weather.date,
-    condition: weather.condition,
-    maxTempC: weather.max_temp_c,
-    minTempC: weather.min_temp_c,
-    humidity: weather.humidity,
-    sunrise: weather.sunrise,
-    sunset: weather.sunset,
+  overview: {
+    packing: {
+      weather: {
+        condition: string;
+        temp_min: string;
+        temp_max: string;
+        humidity: string;
+        sunrise: string;
+        sunset: string;
+      };
+      items: string[];
+    };
+    historical_context: string;
+    current_news: string[];
+  };
+  itinerary: Array<{
+    day: number;
+    title: string;
+    morning: string;
+    afternoon: string;
+    evening: string;
+  }>;
+  playlist: Array<{
+    title: string;
+    artist: string;
+  }>;
+  chat: {
+    initial_message: string;
+    context: {
+      city: string;
+      country: string;
+      days: number;
+      month: string;
+    };
   };
 }
 
@@ -38,11 +45,10 @@ function validateResponse(data: unknown): data is N8nResponse {
   const response = data as Record<string, unknown>;
   
   return (
-    typeof response.weather === 'object' &&
-    typeof response.history === 'string' &&
-    typeof response.news === 'string' &&
-    typeof response.songs === 'string' &&
-    typeof response.itinerary === 'string'
+    typeof response.overview === 'object' &&
+    Array.isArray(response.itinerary) &&
+    Array.isArray(response.playlist) &&
+    typeof response.chat === 'object'
   );
 }
 
@@ -79,15 +85,10 @@ export async function generateItinerary(details: TripDetails): Promise<Itinerary
     }
 
     return {
-      weather: transformWeather(data.weather),
-      history: data.history,
-      news: data.news,
-      songs: data.songs,
+      overview: data.overview,
       itinerary: data.itinerary,
-      city: details.city,
-      country: details.country,
-      numberOfDays: details.numberOfDays,
-      month: details.month,
+      playlist: data.playlist,
+      chat: data.chat,
     };
   } catch (error) {
     clearTimeout(timeoutId);
@@ -109,10 +110,56 @@ export async function generateItinerary(details: TripDetails): Promise<Itinerary
 
 // Export fallback function for error cases
 export function getFallbackItinerary(details: TripDetails): ItineraryData {
-  return generateMockItinerary(
-    details.city,
-    details.country,
-    details.numberOfDays,
-    details.month
-  );
+  return {
+    overview: {
+      packing: {
+        weather: {
+          condition: 'Pleasant weather expected',
+          temp_min: '16°C',
+          temp_max: '24°C',
+          humidity: '60%',
+          sunrise: '06:30 AM',
+          sunset: '07:30 PM',
+        },
+        items: [
+          'Light layers - t-shirts and a light jacket',
+          'Comfortable walking shoes',
+          'Sunglasses and sun hat',
+          'Power adapter for your electronics',
+          'Small daypack for daily adventures',
+        ],
+      },
+      historical_context: `${details.city} is a vibrant destination with a rich cultural heritage spanning centuries. The city offers a unique blend of traditional charm and modern amenities, making it an ideal destination for travelers seeking authentic experiences.`,
+      current_news: [
+        'Local festivals and events happening throughout ' + details.month,
+        'New attractions opening for tourists',
+        'Cultural exhibitions showcasing local heritage',
+        'Transportation improvements for visitors',
+        'Sustainable tourism initiatives launched',
+      ],
+    },
+    itinerary: Array.from({ length: details.numberOfDays }, (_, i) => ({
+      day: i + 1,
+      title: i === 0 ? `Exploring ${details.city}` : `Day ${i + 1} Adventures`,
+      morning: 'Start your day at the historic city center. Visit the main landmarks and soak in the local atmosphere.',
+      afternoon: 'Explore local markets and try authentic cuisine. Visit museums or galleries showcasing local art and history.',
+      evening: 'Enjoy dinner at a recommended restaurant and experience the nightlife.',
+    })),
+    playlist: [
+      { title: 'Local Favorite Song 1', artist: 'Traditional Artist' },
+      { title: 'Local Favorite Song 2', artist: 'Popular Local Band' },
+      { title: 'Travel Vibes', artist: 'International Artist' },
+      { title: 'City Nights', artist: 'Local DJ' },
+      { title: 'Cultural Heritage', artist: 'Folk Ensemble' },
+    ],
+    chat: {
+      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${details.city}. Feel free to ask me anything about your trip!`,
+      context: {
+        city: details.city,
+        country: details.country,
+        days: details.numberOfDays,
+        month: details.month,
+      },
+    },
+  };
 }

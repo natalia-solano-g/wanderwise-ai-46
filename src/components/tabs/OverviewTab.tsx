@@ -7,13 +7,9 @@ interface OverviewTabProps {
 }
 
 export const OverviewTab = ({ data }: OverviewTabProps) => {
-  const { weather, history, news } = data;
-
-  // Parse news into array
-  const newsItems = news.split('\n').filter((item) => item.trim());
-
-  // Generate packing suggestions based on weather
-  const packingSuggestions = generatePackingSuggestions(weather);
+  const { overview } = data;
+  const { packing, historical_context, current_news } = overview;
+  const { weather, items } = packing;
 
   return (
     <div className="space-y-8">
@@ -46,12 +42,12 @@ export const OverviewTab = ({ data }: OverviewTabProps) => {
               <div className="flex items-center gap-2">
                 <Thermometer size={16} className="text-secondary" />
                 <span>
-                  {weather.minTempC}°C - {weather.maxTempC}°C
+                  {weather.temp_min} - {weather.temp_max}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Droplets size={16} className="text-blue-500" />
-                <span>{weather.humidity}% humidity</span>
+                <span>{weather.humidity} humidity</span>
               </div>
               <div className="flex items-center gap-2">
                 <Sunrise size={16} className="text-primary" />
@@ -66,7 +62,7 @@ export const OverviewTab = ({ data }: OverviewTabProps) => {
 
           {/* Packing List */}
           <ul className="space-y-2">
-            {packingSuggestions.map((item, index) => (
+            {items.map((item, index) => (
               <li key={index} className="flex items-start gap-2">
                 <span className="text-primary font-bold">✓</span>
                 <span>{item}</span>
@@ -86,7 +82,7 @@ export const OverviewTab = ({ data }: OverviewTabProps) => {
             <span className="text-3xl">🏛️</span>
             <h3 className="text-xl font-black uppercase">Historical Context</h3>
           </div>
-          <p className="text-muted-foreground leading-relaxed">{history}</p>
+          <p className="text-muted-foreground leading-relaxed">{historical_context}</p>
         </motion.div>
 
         {/* News Card */}
@@ -101,10 +97,10 @@ export const OverviewTab = ({ data }: OverviewTabProps) => {
             <h3 className="text-xl font-black uppercase">Current News</h3>
           </div>
           <ul className="space-y-3">
-            {newsItems.map((item, index) => (
+            {current_news.map((item, index) => (
               <li key={index} className="flex items-start gap-2">
                 <span className="text-secondary font-bold mt-1">•</span>
-                <span className="text-muted-foreground">{item.replace(/^[•-]\s*/, '')}</span>
+                <span className="text-muted-foreground">{item}</span>
               </li>
             ))}
           </ul>
@@ -113,38 +109,3 @@ export const OverviewTab = ({ data }: OverviewTabProps) => {
     </div>
   );
 };
-
-function generatePackingSuggestions(weather: ItineraryData['weather']): string[] {
-  const suggestions: string[] = [];
-
-  // Temperature-based suggestions
-  if (weather.maxTempC >= 25) {
-    suggestions.push('Light, breathable clothing (cotton or linen)');
-    suggestions.push('Sunglasses and sun hat');
-    suggestions.push('Sunscreen SPF 30+');
-  } else if (weather.maxTempC >= 15) {
-    suggestions.push('Light layers - t-shirts and a light jacket');
-    suggestions.push('Comfortable walking shoes');
-  } else {
-    suggestions.push('Warm layers - sweaters, thermal underwear');
-    suggestions.push('Winter coat and warm accessories');
-  }
-
-  // Rain check
-  if (weather.condition.toLowerCase().includes('rain') || weather.condition.toLowerCase().includes('shower')) {
-    suggestions.push('Waterproof jacket or umbrella');
-    suggestions.push('Water-resistant shoes or boots');
-  }
-
-  // Humidity
-  if (weather.humidity > 70) {
-    suggestions.push('Moisture-wicking fabrics');
-  }
-
-  // Always recommend
-  suggestions.push('Comfortable walking shoes - you\'ll be exploring!');
-  suggestions.push('Power adapter for your electronics');
-  suggestions.push('Small daypack for daily adventures');
-
-  return suggestions;
-}
