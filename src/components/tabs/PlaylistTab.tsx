@@ -2,30 +2,24 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Check, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PlaylistSong } from '@/types/voyager';
 
 interface PlaylistTabProps {
-  songs: string;
+  playlist: PlaylistSong[];
   city: string;
 }
 
-export const PlaylistTab = ({ songs, city }: PlaylistTabProps) => {
+export const PlaylistTab = ({ playlist, city }: PlaylistTabProps) => {
   const [copied, setCopied] = useState(false);
 
-  // Parse songs
-  const songList = songs
-    .split('\n')
-    .filter((song) => song.trim())
-    .map((song) => {
-      const match = song.match(/^\d+\.\s*(.+?)\s*-\s*(.+)$/);
-      if (match) {
-        return { title: match[1].trim(), artist: match[2].trim() };
-      }
-      return { title: song.replace(/^\d+\.\s*/, ''), artist: '' };
-    });
+  // Convert playlist to text for copying
+  const playlistText = playlist
+    .map((song, index) => `${index + 1}. ${song.title} - ${song.artist}`)
+    .join('\n');
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(songs);
+      await navigator.clipboard.writeText(playlistText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -40,7 +34,7 @@ export const PlaylistTab = ({ songs, city }: PlaylistTabProps) => {
         <div>
           <span className="highlight-box text-xl">Your Travel Soundtrack</span>
           <p className="text-muted-foreground mt-2">
-            20 songs to set the mood for your {city} adventure
+            {playlist.length} songs to set the mood for your {city} adventure
           </p>
         </div>
         <Button
@@ -65,7 +59,7 @@ export const PlaylistTab = ({ songs, city }: PlaylistTabProps) => {
       {/* Song List */}
       <div className="bordered-card">
         <div className="grid sm:grid-cols-2 gap-3">
-          {songList.map((song, index) => (
+          {playlist.map((song, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, x: -10 }}

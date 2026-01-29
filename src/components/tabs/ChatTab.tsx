@@ -23,6 +23,8 @@ export const ChatTab = ({ messages, setMessages, itineraryContext }: ChatTabProp
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const { city, country, days, month } = itineraryContext.chat.context;
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -48,7 +50,7 @@ export const ChatTab = ({ messages, setMessages, itineraryContext }: ChatTabProp
 
     // Simulate AI response (in production, this would call an API)
     setTimeout(() => {
-      const response = generateMockResponse(messageText, itineraryContext);
+      const response = generateMockResponse(messageText, city, country, month);
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -162,9 +164,8 @@ export const ChatTab = ({ messages, setMessages, itineraryContext }: ChatTabProp
   );
 };
 
-function generateMockResponse(question: string, context: ItineraryData): string {
+function generateMockResponse(question: string, city: string, country: string, month: string): string {
   const q = question.toLowerCase();
-  const { city, country } = context;
 
   if (q.includes('restaurant') || q.includes('food') || q.includes('eat')) {
     return `Great question! Here are some top dining recommendations for ${city}:
@@ -217,7 +218,7 @@ Would you like me to suggest specific hidden gems for any particular day of your
   return `That's a great question about ${city}! 
 
 Based on your itinerary, I'd recommend:
-- Checking local event listings for ${context.month}
+- Checking local event listings for ${month}
 - Connecting with locals through walking tours
 - Exploring neighborhoods beyond the main tourist areas
 

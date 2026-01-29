@@ -1,17 +1,11 @@
 import { motion } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
+import { DayItinerary } from '@/types/voyager';
 
 interface DayByDayTabProps {
-  itinerary: string;
+  itinerary: DayItinerary[];
 }
 
 export const DayByDayTab = ({ itinerary }: DayByDayTabProps) => {
-  // Split itinerary by days and filter to only include actual day sections
-  const days = itinerary
-    .split(/---/)
-    .filter((section) => section.trim())
-    .filter((section) => /Day\s*\d+/i.test(section));
-
   return (
     <div className="space-y-8">
       {/* Section Title */}
@@ -21,48 +15,51 @@ export const DayByDayTab = ({ itinerary }: DayByDayTabProps) => {
 
       {/* Days */}
       <div className="space-y-6">
-        {days.map((day, index) => (
+        {itinerary.map((day, index) => (
           <motion.div
-            key={index}
+            key={day.day}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className="bordered-card"
           >
-            <div className="prose prose-neutral max-w-none">
-              <ReactMarkdown
-                components={{
-                  h2: ({ children }) => (
-                    <div className="flex items-center gap-3 mb-4 not-prose">
-                      <span className="day-badge">
-                        {String(children).match(/Day \d+/)?.[0] || `Day ${index + 1}`}
-                      </span>
-                      <span className="text-xl font-bold">
-                        {String(children).replace(/^#+\s*Day \d+:?\s*/, '')}
-                      </span>
-                    </div>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="text-lg font-bold mt-6 mb-3 flex items-center gap-2">
-                      {children}
-                    </h3>
-                  ),
-                  p: ({ children }) => (
-                    <p className="text-muted-foreground mb-4 leading-relaxed">{children}</p>
-                  ),
-                  strong: ({ children }) => (
-                    <strong className="font-bold text-foreground">{children}</strong>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
-                      {children}
-                    </ul>
-                  ),
-                  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                }}
-              >
-                {day.trim()}
-              </ReactMarkdown>
+            {/* Day Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <span className="day-badge">Day {day.day}</span>
+              <span className="text-xl font-bold">{day.title}</span>
+            </div>
+
+            {/* Time Periods */}
+            <div className="space-y-4">
+              {/* Morning */}
+              <div className="flex items-start gap-3">
+                <div className="w-24 shrink-0">
+                  <span className="text-sm font-bold uppercase text-primary flex items-center gap-1">
+                    ☀️ Morning
+                  </span>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">{day.morning}</p>
+              </div>
+
+              {/* Afternoon */}
+              <div className="flex items-start gap-3">
+                <div className="w-24 shrink-0">
+                  <span className="text-sm font-bold uppercase text-secondary flex items-center gap-1">
+                    🌤️ Afternoon
+                  </span>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">{day.afternoon}</p>
+              </div>
+
+              {/* Evening */}
+              <div className="flex items-start gap-3">
+                <div className="w-24 shrink-0">
+                  <span className="text-sm font-bold uppercase text-orange-500 flex items-center gap-1">
+                    🌙 Evening
+                  </span>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">{day.evening}</p>
+              </div>
             </div>
           </motion.div>
         ))}
