@@ -6,8 +6,11 @@ interface DayByDayTabProps {
 }
 
 export const DayByDayTab = ({ itinerary }: DayByDayTabProps) => {
-  // Split itinerary by days
-  const days = itinerary.split(/---/).filter((section) => section.trim());
+  // Split itinerary by days and filter to only include actual day sections
+  const days = itinerary
+    .split(/---/)
+    .filter((section) => section.trim())
+    .filter((section) => /Day\s*\d+/i.test(section));
 
   return (
     <div className="space-y-8">
