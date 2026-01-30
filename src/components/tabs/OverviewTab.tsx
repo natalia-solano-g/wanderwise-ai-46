@@ -19,7 +19,7 @@ export const OverviewTab = ({ data }: OverviewTabProps) => {
       </div>
 
       {/* Cards Grid */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 w-full">
         {/* Weather & Packing Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
