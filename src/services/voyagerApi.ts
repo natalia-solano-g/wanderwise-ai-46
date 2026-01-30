@@ -126,7 +126,6 @@ export function getFallbackItinerary(details: TripDetails): ItineraryData {
           'Small daypack for daily adventures',
         ],
       },
-      historical_context: `${details.city} is a vibrant destination with a rich cultural heritage spanning centuries. The city offers a unique blend of traditional charm and modern amenities, making it an ideal destination for travelers seeking authentic experiences.`,
       current_news: [
         'Local festivals and events happening throughout ' + details.month,
         'New attractions opening for tourists',

@@ -71,26 +71,28 @@ export const OverviewTab = ({ data }: OverviewTabProps) => {
           </ul>
         </motion.div>
 
-        {/* History Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bordered-card"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">🏛️</span>
-            <h3 className="text-xl font-black uppercase">Historical Context</h3>
-          </div>
-          <p className="text-muted-foreground leading-relaxed">{historical_context}</p>
-        </motion.div>
+        {/* History Card - only show if historical_context exists */}
+        {historical_context && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bordered-card"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">🏛️</span>
+              <h3 className="text-xl font-black uppercase">Historical Context</h3>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">{historical_context}</p>
+          </motion.div>
+        )}
 
-        {/* News Card */}
+        {/* News Card - spans full width when no historical context */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bordered-card md:col-span-2"
+          className={`bordered-card ${historical_context ? 'md:col-span-2' : 'md:col-span-2'}`}
         >
           <div className="flex items-center gap-3 mb-4">
             <span className="text-3xl">📰</span>

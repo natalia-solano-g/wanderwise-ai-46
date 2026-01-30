@@ -30,7 +30,7 @@ export interface PackingData {
 
 export interface OverviewData {
   packing: PackingData;
-  historical_context: string;
+  historical_context?: string;
   current_news: string[];
 }
 
