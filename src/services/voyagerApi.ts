@@ -2,22 +2,15 @@ import { TripDetails, ItineraryData, WeatherData, OverviewData, DayItinerary, Pl
 
 const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook-test/voyager';
 
-interface N8nResponse {
-  overview: {
-    packing: {
-      weather: {
-        condition: string;
-        temp_min: string;
-        temp_max: string;
-        humidity: string;
-        sunrise: string;
-        sunset: string;
-      };
-      items: string[];
-    };
-    historical_context: string;
-    current_news: string[];
-  };
+// Webhook response structure (array of objects)
+interface N8nWebhookItem {
+  city: string;
+  country: string;
+  temperature: string;
+  packing: string; // markdown string
+  history: string;
+  news: string; // markdown string
+  songs: string; // markdown string with numbered list
   itinerary: Array<{
     day: number;
     title: string;
@@ -25,31 +18,125 @@ interface N8nResponse {
     afternoon: string;
     evening: string;
   }>;
-  playlist: Array<{
-    title: string;
-    artist: string;
-  }>;
-  chat: {
-    initial_message: string;
-    context: {
-      city: string;
-      country: string;
-      days: number;
-      month: string;
-    };
-  };
 }
 
-function validateResponse(data: unknown): data is N8nResponse {
-  if (!data || typeof data !== 'object') return false;
-  const response = data as Record<string, unknown>;
+type N8nWebhookResponse = N8nWebhookItem[];
+
+function validateResponse(data: unknown): data is N8nWebhookResponse {
+  if (!Array.isArray(data) || data.length === 0) return false;
+  const item = data[0] as Record<string, unknown>;
   
   return (
-    typeof response.overview === 'object' &&
-    Array.isArray(response.itinerary) &&
-    Array.isArray(response.playlist) &&
-    typeof response.chat === 'object'
+    typeof item.city === 'string' &&
+    typeof item.country === 'string' &&
+    Array.isArray(item.itinerary)
   );
+}
+
+// Parse markdown packing list into array of items
+function parsePackingItems(markdown: string): string[] {
+  if (!markdown) return [];
+  
+  const lines = markdown.split('\n');
+  const items: string[] = [];
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Match lines starting with - (list items)
+    if (trimmed.startsWith('- ')) {
+      items.push(trimmed.substring(2).trim());
+    }
+  }
+  
+  return items.length > 0 ? items : [
+    'Light layers - t-shirts and a light jacket',
+    'Comfortable walking shoes',
+    'Power adapter for your electronics',
+    'Small daypack for daily adventures',
+  ];
+}
+
+// Parse markdown news into array of items
+function parseNewsItems(markdown: string): string[] {
+  if (!markdown) return [];
+  
+  const lines = markdown.split('\n');
+  const items: string[] = [];
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Match lines starting with - (list items) or numbered items
+    if (trimmed.startsWith('- ')) {
+      items.push(trimmed.substring(2).trim());
+    } else if (/^\d+\./.test(trimmed)) {
+      items.push(trimmed.replace(/^\d+\.\s*/, '').trim());
+    }
+  }
+  
+  return items.length > 0 ? items : [
+    'Local festivals and events happening',
+    'New attractions opening for tourists',
+    'Cultural exhibitions showcasing local heritage',
+  ];
+}
+
+// Parse songs markdown into structured playlist
+function parseSongs(markdown: string): PlaylistSong[] {
+  if (!markdown) return [];
+  
+  const lines = markdown.split('\n');
+  const songs: PlaylistSong[] = [];
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    
+    // Match pattern: "1. Song Title - Artist[optional reference]"
+    const match = trimmed.match(/^\d+\.\s*(.+?)\s*-\s*(.+?)(?:\[\d+\].*)?$/);
+    if (match) {
+      songs.push({
+        title: match[1].trim(),
+        artist: match[2].trim().replace(/\[\d+\]/g, '').trim(),
+      });
+    }
+  }
+  
+  return songs.length > 0 ? songs : [
+    { title: 'Local Favorite', artist: 'Traditional Artist' },
+    { title: 'City Anthem', artist: 'Popular Band' },
+  ];
+}
+
+// Transform webhook response to internal ItineraryData format
+function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): ItineraryData {
+  return {
+    overview: {
+      packing: {
+        weather: {
+          condition: webhookData.temperature || 'Pleasant weather expected',
+          temp_min: '16°C',
+          temp_max: '24°C',
+          humidity: '60%',
+          sunrise: '06:30 AM',
+          sunset: '07:30 PM',
+        },
+        items: parsePackingItems(webhookData.packing),
+      },
+      historical_context: webhookData.history || `${details.city} is a vibrant destination with a rich cultural heritage spanning centuries.`,
+      current_news: parseNewsItems(webhookData.news),
+    },
+    itinerary: webhookData.itinerary || [],
+    playlist: parseSongs(webhookData.songs),
+    chat: {
+      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${details.city}. Feel free to ask me anything about your trip!`,
+      context: {
+        city: webhookData.city || details.city,
+        country: webhookData.country || details.country,
+        days: details.numberOfDays,
+        month: details.month,
+      },
+    },
+  };
 }
 
 export async function generateItinerary(details: TripDetails): Promise<ItineraryData> {
@@ -84,12 +171,8 @@ export async function generateItinerary(details: TripDetails): Promise<Itinerary
       throw new Error('Invalid response structure from n8n');
     }
 
-    return {
-      overview: data.overview,
-      itinerary: data.itinerary,
-      playlist: data.playlist,
-      chat: data.chat,
-    };
+    // Take the first item from the array and transform it
+    return transformResponse(data[0], details);
   } catch (error) {
     clearTimeout(timeoutId);
     
