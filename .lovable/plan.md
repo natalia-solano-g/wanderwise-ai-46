@@ -1,117 +1,123 @@
 
-# Fix: Webhook Data Mapping Issue
 
-## Problem Identified
-The n8n webhook is now returning data in a **newer format** where `city` and `country` are nested inside a `destination` object, but the application's validation and transformation logic still expects them at the root level.
+# Simplify API Service for New Webhook Format Only
 
-### Current webhook formats being returned:
+## Current Situation
 
-**Old format (Mexico City):**
-```json
-{
-  "city": "Mexico City",
-  "country": "Mexico",
-  "temperature": "...",
-  "packing": "markdown...",
-  ...
-}
-```
+The `voyagerApi.ts` file currently has hybrid support for both old (markdown strings) and new (structured objects) webhook formats. This includes:
+- Multiple parsing functions for markdown strings
+- Conditional logic to detect format type
+- Legacy fields in the interface
 
-**New format (Rome):**
-```json
+## New Webhook Format (Final)
+
+```text
 {
   "trip_id": "trip_xxx",
   "destination": {
     "city": "Rome",
-    "country": "Italy",
+    "country": "Italy", 
     "duration": 3,
     "month": "May"
   },
-  "overview": { ... },
-  "itinerary": [ ... ],
-  "playlist": []
+  "overview": {
+    "packing": {
+      "weather": { condition, temp_min, temp_max, humidity, sunrise, sunset },
+      "items": [...]
+    },
+    "historical_context": "...",
+    "current_news": [...]
+  },
+  "itinerary": [...],
+  "playlist": [
+    { "title": "O sole mio", "artist": "Traditional (Pavarotti, Caruso)" },
+    ...
+  ]
 }
 ```
 
-### Why you're seeing template data:
-1. The `validateResponse()` function checks for `item.city` and `item.country` at the root level
-2. In the new format, these are inside `destination`, so validation **fails**
-3. When validation fails, the app throws an error and uses fallback/template data
+## Changes to Make
 
----
+### File: `src/services/voyagerApi.ts`
 
-## Solution
+| Section | Action |
+|---------|--------|
+| **Interface** | Remove all legacy fields (`city`, `country`, `temperature`, `packing` string, `history`, `news`, `songs`). Keep only new format fields. |
+| **Parsing functions** | Delete `parsePackingItems()`, `parseNewsItems()`, `parseSongs()` - approximately 60 lines of code |
+| **Validation** | Simplify to check only for `destination` object and `overview` object |
+| **Transform** | Remove all format detection and fallback logic. Direct mapping only. |
 
-Update `src/services/voyagerApi.ts` to handle both response structures:
+### Simplified Interface
 
-### 1. Update the interface to include the new format fields
-Add optional `trip_id` and `destination` fields to support the newer structure.
-
-### 2. Fix the validation function
-Make it flexible to accept either:
-- `city`/`country` at root level, OR
-- `city`/`country` inside `destination` object
-
-### 3. Update the transform function
-Extract `city` and `country` from whichever location they exist (root or `destination`).
-
----
-
-## Technical Details
-
-### Interface Changes
 ```text
 interface N8nWebhookItem {
-  // New format fields
-  trip_id?: string;
-  destination?: {
+  trip_id: string;
+  destination: {
     city: string;
     country: string;
-    duration?: number;
-    month?: string;
+    duration: number;
+    month: string;
   };
-  // Old format fields (keep for backward compatibility)
-  city?: string;
-  country?: string;
-  ...
+  overview: OverviewData;
+  itinerary: DayItinerary[];
+  playlist: PlaylistSong[];
 }
 ```
 
-### Validation Changes
+### Simplified Validation
+
 ```text
 function validateResponse(data: unknown): data is N8nWebhookResponse {
   if (!Array.isArray(data) || data.length === 0) return false;
   const item = data[0] as Record<string, unknown>;
   
-  // Check for city/country at root OR inside destination
-  const hasRootLocation = typeof item.city === 'string' && typeof item.country === 'string';
-  const hasDestination = item.destination && 
-    typeof (item.destination as any).city === 'string' &&
-    typeof (item.destination as any).country === 'string';
+  const destination = item.destination as Record<string, unknown> | undefined;
   
-  return (hasRootLocation || hasDestination) && Array.isArray(item.itinerary);
+  return Boolean(
+    destination &&
+    typeof destination.city === 'string' &&
+    typeof destination.country === 'string' &&
+    item.overview &&
+    Array.isArray(item.itinerary)
+  );
 }
 ```
 
-### Transform Changes
-Extract city/country from the correct location:
+### Simplified Transform
+
 ```text
-const city = webhookData.city || webhookData.destination?.city || details.city;
-const country = webhookData.country || webhookData.destination?.country || details.country;
+function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): ItineraryData {
+  const { destination, overview, itinerary, playlist } = webhookData;
+  
+  return {
+    overview,
+    itinerary,
+    playlist: playlist || [],
+    chat: {
+      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${destination.duration}-day itinerary for your trip to ${destination.city}. Feel free to ask me anything about your trip!`,
+      context: {
+        city: destination.city,
+        country: destination.country,
+        days: destination.duration,
+        month: destination.month,
+      },
+    },
+  };
+}
 ```
 
----
+## Code to Remove
 
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/services/voyagerApi.ts` | Update interface, validation, and transform logic |
-
----
+- Lines 46-64: `parsePackingItems()` function
+- Lines 66-84: `parseNewsItems()` function  
+- Lines 86-109: `parseSongs()` function
+- Lines 130-167: Old format handling in `transformResponse()`
+- Lines 171-178: Old format playlist handling
 
 ## Expected Outcome
-After this fix:
-- The Overview tab will show the actual historical context and news from the webhook
-- The packing list will display real weather data (temp_min, temp_max, humidity, etc.)
-- Both old and new webhook formats will continue to work
+
+- Clean, maintainable code with ~70 fewer lines
+- Direct 1:1 mapping between webhook and internal types
+- No regex parsing overhead
+- Playlist displays correctly with structured data from webhook
+
