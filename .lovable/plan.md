@@ -1,123 +1,74 @@
 
 
-# Simplify API Service for New Webhook Format Only
+# Update for Simplified Webhook Format
 
-## Current Situation
+## What Changed
 
-The `voyagerApi.ts` file currently has hybrid support for both old (markdown strings) and new (structured objects) webhook formats. This includes:
-- Multiple parsing functions for markdown strings
-- Conditional logic to detect format type
-- Legacy fields in the interface
-
-## New Webhook Format (Final)
+The n8n webhook no longer returns `historical_context` in the overview. The new structure is:
 
 ```text
-{
-  "trip_id": "trip_xxx",
-  "destination": {
-    "city": "Rome",
-    "country": "Italy", 
-    "duration": 3,
-    "month": "May"
-  },
-  "overview": {
-    "packing": {
-      "weather": { condition, temp_min, temp_max, humidity, sunrise, sunset },
-      "items": [...]
-    },
-    "historical_context": "...",
-    "current_news": [...]
-  },
-  "itinerary": [...],
-  "playlist": [
-    { "title": "O sole mio", "artist": "Traditional (Pavarotti, Caruso)" },
-    ...
-  ]
+overview: {
+  packing: { weather: {...}, items: [...] },
+  current_news: [...]
 }
 ```
 
-## Changes to Make
+## Files to Update
 
-### File: `src/services/voyagerApi.ts`
+| File | Change |
+|------|--------|
+| `src/types/voyager.ts` | Make `historical_context` optional in `OverviewData` |
+| `src/components/tabs/OverviewTab.tsx` | Conditionally render the Historical Context card only when data exists |
+| `src/services/voyagerApi.ts` | Remove `historical_context` from the fallback function |
 
-| Section | Action |
-|---------|--------|
-| **Interface** | Remove all legacy fields (`city`, `country`, `temperature`, `packing` string, `history`, `news`, `songs`). Keep only new format fields. |
-| **Parsing functions** | Delete `parsePackingItems()`, `parseNewsItems()`, `parseSongs()` - approximately 60 lines of code |
-| **Validation** | Simplify to check only for `destination` object and `overview` object |
-| **Transform** | Remove all format detection and fallback logic. Direct mapping only. |
+## Detailed Changes
 
-### Simplified Interface
+### 1. Update Type Definition
+
+**File:** `src/types/voyager.ts`
+
+Change `historical_context` from required to optional:
 
 ```text
-interface N8nWebhookItem {
-  trip_id: string;
-  destination: {
-    city: string;
-    country: string;
-    duration: number;
-    month: string;
-  };
-  overview: OverviewData;
-  itinerary: DayItinerary[];
-  playlist: PlaylistSong[];
+export interface OverviewData {
+  packing: PackingData;
+  historical_context?: string;  // Now optional
+  current_news: string[];
 }
 ```
 
-### Simplified Validation
+### 2. Update Overview UI Component
+
+**File:** `src/components/tabs/OverviewTab.tsx`
+
+Only render the Historical Context card when the field exists:
 
 ```text
-function validateResponse(data: unknown): data is N8nWebhookResponse {
-  if (!Array.isArray(data) || data.length === 0) return false;
-  const item = data[0] as Record<string, unknown>;
-  
-  const destination = item.destination as Record<string, unknown> | undefined;
-  
-  return Boolean(
-    destination &&
-    typeof destination.city === 'string' &&
-    typeof destination.country === 'string' &&
-    item.overview &&
-    Array.isArray(item.itinerary)
-  );
-}
+{/* History Card - only show if historical_context exists */}
+{historical_context && (
+  <motion.div ...>
+    <div className="flex items-center gap-3 mb-4">
+      <span className="text-3xl">🏛️</span>
+      <h3 className="text-xl font-black uppercase">Historical Context</h3>
+    </div>
+    <p className="text-muted-foreground leading-relaxed">{historical_context}</p>
+  </motion.div>
+)}
 ```
 
-### Simplified Transform
+Also update the grid layout so the News card spans full width when there's no History card.
 
-```text
-function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): ItineraryData {
-  const { destination, overview, itinerary, playlist } = webhookData;
-  
-  return {
-    overview,
-    itinerary,
-    playlist: playlist || [],
-    chat: {
-      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${destination.duration}-day itinerary for your trip to ${destination.city}. Feel free to ask me anything about your trip!`,
-      context: {
-        city: destination.city,
-        country: destination.country,
-        days: destination.duration,
-        month: destination.month,
-      },
-    },
-  };
-}
-```
+### 3. Update Fallback Function
 
-## Code to Remove
+**File:** `src/services/voyagerApi.ts`
 
-- Lines 46-64: `parsePackingItems()` function
-- Lines 66-84: `parseNewsItems()` function  
-- Lines 86-109: `parseSongs()` function
-- Lines 130-167: Old format handling in `transformResponse()`
-- Lines 171-178: Old format playlist handling
+Remove `historical_context` from the `getFallbackItinerary()` function to match the new format.
 
-## Expected Outcome
+## Layout Adjustment
 
-- Clean, maintainable code with ~70 fewer lines
-- Direct 1:1 mapping between webhook and internal types
-- No regex parsing overhead
-- Playlist displays correctly with structured data from webhook
+When `historical_context` is missing:
+- The Packing card will be on the left
+- The News card will span the full width below it
+
+This keeps the UI clean without an empty card.
 
