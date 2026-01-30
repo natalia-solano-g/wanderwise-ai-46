@@ -4,8 +4,17 @@ const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook-test/voyager'
 
 // Webhook response structure (array of objects) - supports both old and new formats
 interface N8nWebhookItem {
-  city: string;
-  country: string;
+  // New format fields (nested destination)
+  trip_id?: string;
+  destination?: {
+    city: string;
+    country: string;
+    duration?: number;
+    month?: string;
+  };
+  // Old format fields (root level)
+  city?: string;
+  country?: string;
   // Old format fields (markdown strings)
   temperature?: string;
   packing?: string; // markdown string
@@ -32,11 +41,14 @@ function validateResponse(data: unknown): data is N8nWebhookResponse {
   if (!Array.isArray(data) || data.length === 0) return false;
   const item = data[0] as Record<string, unknown>;
   
-  return (
-    typeof item.city === 'string' &&
-    typeof item.country === 'string' &&
-    Array.isArray(item.itinerary)
-  );
+  // Check for city/country at root OR inside destination object
+  const hasRootLocation = typeof item.city === 'string' && typeof item.country === 'string';
+  const destination = item.destination as Record<string, unknown> | undefined;
+  const hasDestination = destination && 
+    typeof destination.city === 'string' &&
+    typeof destination.country === 'string';
+  
+  return (hasRootLocation || hasDestination) && Array.isArray(item.itinerary);
 }
 
 // Parse markdown packing list into array of items
@@ -115,6 +127,10 @@ function parseSongs(markdown: string): PlaylistSong[] {
 
 // Transform webhook response to internal ItineraryData format
 function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): ItineraryData {
+  // Extract city/country from either root level or destination object
+  const city = webhookData.city || webhookData.destination?.city || details.city;
+  const country = webhookData.country || webhookData.destination?.country || details.country;
+  
   // Check if the webhook returns the new structured format with 'overview' object
   const hasNewFormat = 'overview' in webhookData && webhookData.overview;
   
@@ -169,10 +185,10 @@ function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): I
 
   // Handle chat - check for new format vs construct from context
   const chat: ChatData = webhookData.chat || {
-    initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${details.city}. Feel free to ask me anything about your trip!`,
+    initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${city}. Feel free to ask me anything about your trip!`,
     context: {
-      city: webhookData.city || details.city,
-      country: webhookData.country || details.country,
+      city,
+      country,
       days: details.numberOfDays,
       month: details.month,
     },
