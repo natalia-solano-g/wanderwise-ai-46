@@ -2,15 +2,21 @@ import { TripDetails, ItineraryData, WeatherData, OverviewData, DayItinerary, Pl
 
 const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook-test/voyager';
 
-// Webhook response structure (array of objects)
+// Webhook response structure (array of objects) - supports both old and new formats
 interface N8nWebhookItem {
   city: string;
   country: string;
-  temperature: string;
-  packing: string; // markdown string
-  history: string;
-  news: string; // markdown string
-  songs: string; // markdown string with numbered list
+  // Old format fields (markdown strings)
+  temperature?: string;
+  packing?: string; // markdown string
+  history?: string;
+  news?: string; // markdown string
+  songs?: string; // markdown string with numbered list
+  // New format fields (structured objects)
+  overview?: OverviewData;
+  playlist?: PlaylistSong[];
+  chat?: ChatData;
+  // Common fields
   itinerary: Array<{
     day: number;
     title: string;
@@ -109,8 +115,32 @@ function parseSongs(markdown: string): PlaylistSong[] {
 
 // Transform webhook response to internal ItineraryData format
 function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): ItineraryData {
-  return {
-    overview: {
+  // Check if the webhook returns the new structured format with 'overview' object
+  const hasNewFormat = 'overview' in webhookData && webhookData.overview;
+  
+  let overview: OverviewData;
+  
+  if (hasNewFormat) {
+    // New format: webhook returns structured overview object
+    const webhookOverview = webhookData.overview as OverviewData;
+    overview = {
+      packing: webhookOverview.packing || {
+        weather: {
+          condition: 'Pleasant weather expected',
+          temp_min: '16°C',
+          temp_max: '24°C',
+          humidity: '60%',
+          sunrise: '06:30 AM',
+          sunset: '07:30 PM',
+        },
+        items: [],
+      },
+      historical_context: webhookOverview.historical_context || `${details.city} is a vibrant destination with a rich cultural heritage spanning centuries.`,
+      current_news: webhookOverview.current_news || [],
+    };
+  } else {
+    // Old format: webhook returns flat structure with markdown strings
+    overview = {
       packing: {
         weather: {
           condition: webhookData.temperature || 'Pleasant weather expected',
@@ -120,22 +150,39 @@ function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): I
           sunrise: '06:30 AM',
           sunset: '07:30 PM',
         },
-        items: parsePackingItems(webhookData.packing),
+        items: parsePackingItems(webhookData.packing as string),
       },
       historical_context: webhookData.history || `${details.city} is a vibrant destination with a rich cultural heritage spanning centuries.`,
-      current_news: parseNewsItems(webhookData.news),
+      current_news: parseNewsItems(webhookData.news as string),
+    };
+  }
+
+  // Handle playlist - check for new format (array) vs old format (markdown string)
+  let playlist: PlaylistSong[];
+  if (Array.isArray(webhookData.playlist)) {
+    playlist = webhookData.playlist;
+  } else if (typeof webhookData.songs === 'string') {
+    playlist = parseSongs(webhookData.songs);
+  } else {
+    playlist = [];
+  }
+
+  // Handle chat - check for new format vs construct from context
+  const chat: ChatData = webhookData.chat || {
+    initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${details.city}. Feel free to ask me anything about your trip!`,
+    context: {
+      city: webhookData.city || details.city,
+      country: webhookData.country || details.country,
+      days: details.numberOfDays,
+      month: details.month,
     },
+  };
+
+  return {
+    overview,
     itinerary: webhookData.itinerary || [],
-    playlist: parseSongs(webhookData.songs),
-    chat: {
-      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${details.city}. Feel free to ask me anything about your trip!`,
-      context: {
-        city: webhookData.city || details.city,
-        country: webhookData.country || details.country,
-        days: details.numberOfDays,
-        month: details.month,
-      },
-    },
+    playlist,
+    chat,
   };
 }
 
