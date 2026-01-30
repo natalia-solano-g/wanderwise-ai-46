@@ -1,108 +1,117 @@
 
+# Fix: Webhook Data Mapping Issue
 
-# n8n Webhook Integration Plan
+## Problem Identified
+The n8n webhook is now returning data in a **newer format** where `city` and `country` are nested inside a `destination` object, but the application's validation and transformation logic still expects them at the root level.
 
-## Overview
-Connect Voyager to your n8n test webhook to generate real itineraries with live weather, history, news, and music data.
+### Current webhook formats being returned:
 
-## What Will Change
+**Old format (Mexico City):**
+```json
+{
+  "city": "Mexico City",
+  "country": "Mexico",
+  "temperature": "...",
+  "packing": "markdown...",
+  ...
+}
+```
 
-### 1. Create API Service Layer
-A new service file (`src/services/voyagerApi.ts`) that:
-- Sends trip details to your n8n webhook
-- Handles the response and maps it to our `ItineraryData` type
-- Includes proper error handling with fallback to mock data
+**New format (Rome):**
+```json
+{
+  "trip_id": "trip_xxx",
+  "destination": {
+    "city": "Rome",
+    "country": "Italy",
+    "duration": 3,
+    "month": "May"
+  },
+  "overview": { ... },
+  "itinerary": [ ... ],
+  "playlist": []
+}
+```
 
-### 2. Update Index Page
-Modify `src/pages/Index.tsx` to:
-- Replace the mock data generator with real API calls
-- Add error handling with user-friendly toast notifications
-- Keep the engaging loading animation during the API call
+### Why you're seeing template data:
+1. The `validateResponse()` function checks for `item.city` and `item.country` at the root level
+2. In the new format, these are inside `destination`, so validation **fails**
+3. When validation fails, the app throws an error and uses fallback/template data
 
-### 3. Response Mapping
-The n8n webhook returns data in snake_case format. We'll transform it to match our TypeScript types:
+---
 
-| n8n Response | Voyager Type |
-|--------------|--------------|
-| `max_temp_c` | `maxTempC` |
-| `min_temp_c` | `minTempC` |
-| `number_of_days` | `numberOfDays` |
+## Solution
+
+Update `src/services/voyagerApi.ts` to handle both response structures:
+
+### 1. Update the interface to include the new format fields
+Add optional `trip_id` and `destination` fields to support the newer structure.
+
+### 2. Fix the validation function
+Make it flexible to accept either:
+- `city`/`country` at root level, OR
+- `city`/`country` inside `destination` object
+
+### 3. Update the transform function
+Extract `city` and `country` from whichever location they exist (root or `destination`).
+
+---
 
 ## Technical Details
 
-### API Service (`src/services/voyagerApi.ts`)
+### Interface Changes
 ```text
-+---------------------------+
-|    generateItinerary()    |
-+---------------------------+
-          |
-          v
-+---------------------------+
-| POST to n8n webhook       |
-| - city, country           |
-| - number_of_days, month   |
-| - preferences             |
-+---------------------------+
-          |
-          v
-+---------------------------+
-| Transform Response        |
-| - Map snake_case to       |
-|   camelCase               |
-| - Add trip metadata       |
-+---------------------------+
-          |
-          v
-+---------------------------+
-| Return ItineraryData      |
-+---------------------------+
-```
-
-### Request Payload
-```json
-{
-  "city": "London",
-  "country": "United Kingdom",
-  "number_of_days": 4,
-  "month": "September",
-  "preferences": "I love street food..."
+interface N8nWebhookItem {
+  // New format fields
+  trip_id?: string;
+  destination?: {
+    city: string;
+    country: string;
+    duration?: number;
+    month?: string;
+  };
+  // Old format fields (keep for backward compatibility)
+  city?: string;
+  country?: string;
+  ...
 }
 ```
 
-### Expected Response
-```json
-{
-  "weather": {
-    "date": "2026-09-15",
-    "condition": "Partly cloudy",
-    "max_temp_c": 21,
-    "min_temp_c": 11,
-    "humidity": 80,
-    "sunrise": "07:13 AM",
-    "sunset": "07:47 PM"
-  },
-  "history": "Before visiting London...",
-  "news": "- Breaking news item 1...",
-  "songs": "1. Song - Artist\n2. Song - Artist...",
-  "itinerary": "### Day 1..."
+### Validation Changes
+```text
+function validateResponse(data: unknown): data is N8nWebhookResponse {
+  if (!Array.isArray(data) || data.length === 0) return false;
+  const item = data[0] as Record<string, unknown>;
+  
+  // Check for city/country at root OR inside destination
+  const hasRootLocation = typeof item.city === 'string' && typeof item.country === 'string';
+  const hasDestination = item.destination && 
+    typeof (item.destination as any).city === 'string' &&
+    typeof (item.destination as any).country === 'string';
+  
+  return (hasRootLocation || hasDestination) && Array.isArray(item.itinerary);
 }
 ```
 
-## Error Handling Strategy
-1. **Network errors**: Show toast notification, fall back to mock data
-2. **Invalid response**: Validate response structure, use defaults for missing fields
-3. **Timeout**: Set 60-second timeout for long n8n processing
+### Transform Changes
+Extract city/country from the correct location:
+```text
+const city = webhookData.city || webhookData.destination?.city || details.city;
+const country = webhookData.country || webhookData.destination?.country || details.country;
+```
 
-## Files to Create/Modify
+---
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/services/voyagerApi.ts` | Create | API service with n8n integration |
-| `src/pages/Index.tsx` | Modify | Use API service instead of mock data |
+## Files to Modify
 
-## Important Notes
+| File | Change |
+|------|--------|
+| `src/services/voyagerApi.ts` | Update interface, validation, and transform logic |
 
-- **Test URL**: Using `https://natisolanog.app.n8n.cloud/webhook-test/voyager`
-- **Test mode**: The n8n test webhook requires you to have the workflow open in n8n and click "Test workflow" for it to respond. For production, you'll switch to the production webhook URL.
-- **No secrets needed**: Since this is a test URL and publicly accessible, we'll hardcode it initially. When moving to production, we can add it as a secure secret.
+---
 
+## Expected Outcome
+After this fix:
+- The Overview tab will show the actual historical context and news from the webhook
+- The packing list will display real weather data (temp_min, temp_max, humidity, etc.)
+- Both old and new webhook formats will continue to work
