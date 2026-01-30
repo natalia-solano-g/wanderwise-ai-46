@@ -1,38 +1,19 @@
-import { TripDetails, ItineraryData, WeatherData, OverviewData, DayItinerary, PlaylistSong, ChatData } from '@/types/voyager';
+import { TripDetails, ItineraryData, OverviewData, DayItinerary, PlaylistSong, ChatData } from '@/types/voyager';
 
 const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook-test/voyager';
 
-// Webhook response structure (array of objects) - supports both old and new formats
+// New webhook response structure
 interface N8nWebhookItem {
-  // New format fields (nested destination)
-  trip_id?: string;
-  destination?: {
+  trip_id: string;
+  destination: {
     city: string;
     country: string;
-    duration?: number;
-    month?: string;
+    duration: number;
+    month: string;
   };
-  // Old format fields (root level)
-  city?: string;
-  country?: string;
-  // Old format fields (markdown strings)
-  temperature?: string;
-  packing?: string; // markdown string
-  history?: string;
-  news?: string; // markdown string
-  songs?: string; // markdown string with numbered list
-  // New format fields (structured objects)
-  overview?: OverviewData;
-  playlist?: PlaylistSong[];
-  chat?: ChatData;
-  // Common fields
-  itinerary: Array<{
-    day: number;
-    title: string;
-    morning: string;
-    afternoon: string;
-    evening: string;
-  }>;
+  overview: OverviewData;
+  itinerary: DayItinerary[];
+  playlist: PlaylistSong[];
 }
 
 type N8nWebhookResponse = N8nWebhookItem[];
@@ -41,164 +22,34 @@ function validateResponse(data: unknown): data is N8nWebhookResponse {
   if (!Array.isArray(data) || data.length === 0) return false;
   const item = data[0] as Record<string, unknown>;
   
-  // Check for city/country at root OR inside destination object
-  const hasRootLocation = typeof item.city === 'string' && typeof item.country === 'string';
   const destination = item.destination as Record<string, unknown> | undefined;
-  const hasDestination = destination && 
+  
+  return Boolean(
+    destination &&
     typeof destination.city === 'string' &&
-    typeof destination.country === 'string';
-  
-  return (hasRootLocation || hasDestination) && Array.isArray(item.itinerary);
-}
-
-// Parse markdown packing list into array of items
-function parsePackingItems(markdown: string): string[] {
-  if (!markdown) return [];
-  
-  const lines = markdown.split('\n');
-  const items: string[] = [];
-  
-  for (const line of lines) {
-    const trimmed = line.trim();
-    // Match lines starting with - (list items)
-    if (trimmed.startsWith('- ')) {
-      items.push(trimmed.substring(2).trim());
-    }
-  }
-  
-  return items.length > 0 ? items : [
-    'Light layers - t-shirts and a light jacket',
-    'Comfortable walking shoes',
-    'Power adapter for your electronics',
-    'Small daypack for daily adventures',
-  ];
-}
-
-// Parse markdown news into array of items
-function parseNewsItems(markdown: string): string[] {
-  if (!markdown) return [];
-  
-  const lines = markdown.split('\n');
-  const items: string[] = [];
-  
-  for (const line of lines) {
-    const trimmed = line.trim();
-    // Match lines starting with - (list items) or numbered items
-    if (trimmed.startsWith('- ')) {
-      items.push(trimmed.substring(2).trim());
-    } else if (/^\d+\./.test(trimmed)) {
-      items.push(trimmed.replace(/^\d+\.\s*/, '').trim());
-    }
-  }
-  
-  return items.length > 0 ? items : [
-    'Local festivals and events happening',
-    'New attractions opening for tourists',
-    'Cultural exhibitions showcasing local heritage',
-  ];
-}
-
-// Parse songs markdown into structured playlist
-function parseSongs(markdown: string): PlaylistSong[] {
-  if (!markdown) return [];
-  
-  const lines = markdown.split('\n');
-  const songs: PlaylistSong[] = [];
-  
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    
-    // Match pattern: "1. Song Title - Artist[optional reference]"
-    const match = trimmed.match(/^\d+\.\s*(.+?)\s*-\s*(.+?)(?:\[\d+\].*)?$/);
-    if (match) {
-      songs.push({
-        title: match[1].trim(),
-        artist: match[2].trim().replace(/\[\d+\]/g, '').trim(),
-      });
-    }
-  }
-  
-  return songs.length > 0 ? songs : [
-    { title: 'Local Favorite', artist: 'Traditional Artist' },
-    { title: 'City Anthem', artist: 'Popular Band' },
-  ];
+    typeof destination.country === 'string' &&
+    item.overview &&
+    Array.isArray(item.itinerary)
+  );
 }
 
 // Transform webhook response to internal ItineraryData format
-function transformResponse(webhookData: N8nWebhookItem, details: TripDetails): ItineraryData {
-  // Extract city/country from either root level or destination object
-  const city = webhookData.city || webhookData.destination?.city || details.city;
-  const country = webhookData.country || webhookData.destination?.country || details.country;
+function transformResponse(webhookData: N8nWebhookItem): ItineraryData {
+  const { destination, overview, itinerary, playlist } = webhookData;
   
-  // Check if the webhook returns the new structured format with 'overview' object
-  const hasNewFormat = 'overview' in webhookData && webhookData.overview;
-  
-  let overview: OverviewData;
-  
-  if (hasNewFormat) {
-    // New format: webhook returns structured overview object
-    const webhookOverview = webhookData.overview as OverviewData;
-    overview = {
-      packing: webhookOverview.packing || {
-        weather: {
-          condition: 'Pleasant weather expected',
-          temp_min: '16°C',
-          temp_max: '24°C',
-          humidity: '60%',
-          sunrise: '06:30 AM',
-          sunset: '07:30 PM',
-        },
-        items: [],
-      },
-      historical_context: webhookOverview.historical_context || `${details.city} is a vibrant destination with a rich cultural heritage spanning centuries.`,
-      current_news: webhookOverview.current_news || [],
-    };
-  } else {
-    // Old format: webhook returns flat structure with markdown strings
-    overview = {
-      packing: {
-        weather: {
-          condition: webhookData.temperature || 'Pleasant weather expected',
-          temp_min: '16°C',
-          temp_max: '24°C',
-          humidity: '60%',
-          sunrise: '06:30 AM',
-          sunset: '07:30 PM',
-        },
-        items: parsePackingItems(webhookData.packing as string),
-      },
-      historical_context: webhookData.history || `${details.city} is a vibrant destination with a rich cultural heritage spanning centuries.`,
-      current_news: parseNewsItems(webhookData.news as string),
-    };
-  }
-
-  // Handle playlist - check for new format (array) vs old format (markdown string)
-  let playlist: PlaylistSong[];
-  if (Array.isArray(webhookData.playlist)) {
-    playlist = webhookData.playlist;
-  } else if (typeof webhookData.songs === 'string') {
-    playlist = parseSongs(webhookData.songs);
-  } else {
-    playlist = [];
-  }
-
-  // Handle chat - check for new format vs construct from context
-  const chat: ChatData = webhookData.chat || {
-    initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${city}. Feel free to ask me anything about your trip!`,
-    context: {
-      city,
-      country,
-      days: details.numberOfDays,
-      month: details.month,
-    },
-  };
-
   return {
     overview,
-    itinerary: webhookData.itinerary || [],
-    playlist,
-    chat,
+    itinerary,
+    playlist: playlist || [],
+    chat: {
+      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${destination.duration}-day itinerary for your trip to ${destination.city}. Feel free to ask me anything about your trip!`,
+      context: {
+        city: destination.city,
+        country: destination.country,
+        days: destination.duration,
+        month: destination.month,
+      },
+    },
   };
 }
 
@@ -235,7 +86,7 @@ export async function generateItinerary(details: TripDetails): Promise<Itinerary
     }
 
     // Take the first item from the array and transform it
-    return transformResponse(data[0], details);
+    return transformResponse(data[0]);
   } catch (error) {
     clearTimeout(timeoutId);
     
