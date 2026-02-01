@@ -1,28 +1,30 @@
 
 
-# Switch to Production Webhook URL
+# Fix Afternoon Label Overflow
 
-## Change Required
+## Problem
 
-Update the n8n webhook URL from test mode to production mode.
+The "🌤️ Afternoon" label is wrapping to two lines because the container width (`w-24` = 96px) is too narrow for the longer word "Afternoon" compared to "Morning" and "Evening".
 
-| Current (Test) | New (Production) |
-|----------------|------------------|
-| `https://natisolanog.app.n8n.cloud/webhook-test/voyager` | `https://natisolanog.app.n8n.cloud/webhook/voyager` |
+## Solution
+
+Increase the width of the time period label containers from `w-24` (96px) to `w-28` (112px) to accommodate all labels on a single line.
 
 ## File to Update
 
-**`src/services/voyagerApi.ts`** - Line 3
+**`src/components/tabs/DayByDayTab.tsx`** - Lines 36, 46, and 56
+
+Change `w-24` to `w-28` for all three time period containers (Morning, Afternoon, Evening) to keep them consistent:
 
 ```text
-// Before
-const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook-test/voyager';
+// Before (Line 36, 46, 56)
+<div className="w-24 shrink-0">
 
 // After
-const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook/voyager';
+<div className="w-28 shrink-0">
 ```
 
-## Important Reminder
+## Alternative Option
 
-Make sure your n8n workflow is set to **Active** (toggle in the top-right corner of the n8n editor). Production webhooks only work when the workflow is active.
+If you prefer even more room, `w-32` (128px) would provide additional breathing room for the labels.
 
