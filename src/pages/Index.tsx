@@ -3,34 +3,32 @@ import { Header, Hero } from '@/components/Header';
 import { TripForm } from '@/components/TripForm';
 import { ItineraryView } from '@/components/ItineraryView';
 import { TripDetails, ItineraryData } from '@/types/voyager';
-import { generateItinerary, getFallbackItinerary } from '@/services/voyagerApi';
-import { toast } from '@/hooks/use-toast';
+import { generateItinerary } from '@/services/voyagerApi';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [itinerary, setItinerary] = useState<ItineraryData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFormSubmit = async (details: TripDetails) => {
     setIsLoading(true);
+    setError(null);
 
     try {
       const data = await generateItinerary(details);
       setItinerary(data);
     } catch (error) {
       console.error('Failed to generate itinerary:', error);
-      
-      toast({
-        title: 'Could not reach n8n webhook',
-        description: 'Using demo data instead. Make sure your n8n workflow is in test mode.',
-        variant: 'destructive',
-      });
-
-      // Fall back to mock data
-      const fallbackData = getFallbackItinerary(details);
-      setItinerary(fallbackData);
+      setError('Oops! We couldn\'t create your itinerary 🗺️');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTryAgain = () => {
+    setError(null);
   };
 
   const handleBackToHome = () => {
@@ -50,7 +48,29 @@ const Index = () => {
       {/* Form Section */}
       <section className="pb-16 md:pb-24">
         <div className="container mx-auto px-4 max-w-lg">
-          <TripForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+          {error ? (
+            <div className="bg-card border-2 border-destructive rounded-xl p-8 text-center space-y-4">
+              <div className="flex justify-center">
+                <AlertCircle className="h-16 w-16 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">
+                {error}
+              </h2>
+              <p className="text-muted-foreground">
+                Double-check that your city and country actually exist and are spelled correctly. 
+                Even our AI gets confused by "Pairs, Fance" 😅
+              </p>
+              <Button 
+                onClick={handleTryAgain}
+                className="gap-2"
+              >
+                <RefreshCw size={18} />
+                Let's try again!
+              </Button>
+            </div>
+          ) : (
+            <TripForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+          )}
         </div>
       </section>
 
