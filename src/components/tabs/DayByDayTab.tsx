@@ -33,7 +33,7 @@ export const DayByDayTab = ({ itinerary }: DayByDayTabProps) => {
             <div className="space-y-4">
               {/* Morning */}
               <div className="flex items-start gap-3">
-                <div className="w-24 shrink-0">
+              <div className="w-28 shrink-0">
                   <span className="text-sm font-bold uppercase text-primary flex items-center gap-1">
                     ☀️ Morning
                   </span>
@@ -43,7 +43,7 @@ export const DayByDayTab = ({ itinerary }: DayByDayTabProps) => {
 
               {/* Afternoon */}
               <div className="flex items-start gap-3">
-                <div className="w-24 shrink-0">
+              <div className="w-28 shrink-0">
                   <span className="text-sm font-bold uppercase text-secondary flex items-center gap-1">
                     🌤️ Afternoon
                   </span>
@@ -53,7 +53,7 @@ export const DayByDayTab = ({ itinerary }: DayByDayTabProps) => {
 
               {/* Evening */}
               <div className="flex items-start gap-3">
-                <div className="w-24 shrink-0">
+                <div className="w-28 shrink-0">
                   <span className="text-sm font-bold uppercase text-orange-500 flex items-center gap-1">
                     🌙 Evening
                   </span>
