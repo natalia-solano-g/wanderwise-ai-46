@@ -18,7 +18,7 @@ export const TripForm = ({ onSubmit, isLoading }: TripFormProps) => {
   const [preferences, setPreferences] = useState('');
 
   const loadingSteps = [
-    '🌤️ Checking weather...',
+    '✨ Creating your tailored itinerary...',
     '📚 Researching history...',
     '📰 Finding latest news...',
     '🎵 Curating local music...',
