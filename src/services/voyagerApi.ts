@@ -1,6 +1,6 @@
 import { TripDetails, ItineraryData, OverviewData, DayItinerary, PlaylistSong, ChatData } from '@/types/voyager';
 
-const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook-test/voyager';
+const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook/voyager';
 
 // New webhook response structure
 interface N8nWebhookItem {
