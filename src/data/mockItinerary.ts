@@ -232,8 +232,7 @@ export const generateMockItinerary = (city: string, country: string, numberOfDay
     chat: {
       initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${numberOfDays}-day itinerary for your trip to ${city}. Feel free to ask me anything about your trip!`,
       context: {
-        city,
-        country,
+        place: `${city}, ${country}`,
         days: numberOfDays,
         month,
       },

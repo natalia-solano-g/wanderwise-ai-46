@@ -11,8 +11,7 @@ interface TripFormProps {
 }
 
 export const TripForm = ({ onSubmit, isLoading }: TripFormProps) => {
-  const [city, setCity] = useState('');
-  const [country, setCountry] = useState('');
+  const [place, setPlace] = useState('');
   const [numberOfDays, setNumberOfDays] = useState(4);
   const [month, setMonth] = useState('September');
   const [preferences, setPreferences] = useState('');
@@ -39,11 +38,10 @@ export const TripForm = ({ onSubmit, isLoading }: TripFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!city.trim() || !country.trim()) return;
+    if (!place.trim()) return;
     
     onSubmit({
-      city: city.trim(),
-      country: country.trim(),
+      place: place.trim(),
       numberOfDays,
       month,
       preferences,
@@ -53,32 +51,16 @@ export const TripForm = ({ onSubmit, isLoading }: TripFormProps) => {
   return (
     <div className="bg-card border-2 border-foreground rounded-xl p-6 shadow-[8px_8px_0_0_hsl(var(--foreground))]">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* City */}
+        {/* Place */}
         <div>
           <label className="block text-sm font-bold uppercase mb-2">
-            City
+            Where to?
           </label>
           <input
             type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="e.g. Rome, Tokyo, Paris..."
-            className="w-full h-12 px-4 bg-background border-2 border-foreground rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground"
-            disabled={isLoading}
-            required
-          />
-        </div>
-
-        {/* Country */}
-        <div>
-          <label className="block text-sm font-bold uppercase mb-2">
-            Country
-          </label>
-          <input
-            type="text"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="e.g. Italy, Japan, France..."
+            value={place}
+            onChange={(e) => setPlace(e.target.value)}
+            placeholder="e.g. Rome, Japan, Southeast Asia..."
             className="w-full h-12 px-4 bg-background border-2 border-foreground rounded-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground"
             disabled={isLoading}
             required
@@ -143,7 +125,7 @@ export const TripForm = ({ onSubmit, isLoading }: TripFormProps) => {
           variant="primary"
           size="xl"
           className="w-full"
-          disabled={isLoading || !city.trim() || !country.trim()}
+          disabled={isLoading || !place.trim()}
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

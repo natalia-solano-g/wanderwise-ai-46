@@ -57,8 +57,8 @@ const Index = () => {
                 {error}
               </h2>
               <p className="text-muted-foreground">
-                Double-check that your city and country actually exist and are spelled correctly. 
-                Even our AI gets confused by "Pairs, Fance" 😅
+                Double-check that your destination actually exists and is spelled correctly. 
+                Even our AI gets confused by "Pairs" instead of "Paris" 😅
               </p>
               <Button 
                 onClick={handleTryAgain}
