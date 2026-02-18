@@ -1,30 +1,51 @@
 
 
-# Fix Afternoon Label Overflow
+# Diagnose and Fix Webhook Errors
 
-## Problem
+## Likely Root Cause
 
-The "🌤️ Afternoon" label is wrapping to two lines because the container width (`w-24` = 96px) is too narrow for the longer word "Afternoon" compared to "Morning" and "Evening".
+The most probable cause is **CORS (Cross-Origin Resource Sharing)**. Your users' browsers are blocking the direct request to `natisolanog.app.n8n.cloud` because the n8n server may not return the required CORS headers (`Access-Control-Allow-Origin`). This works in some environments (like n8n's test mode or certain browsers) but fails for end users on your published domain.
 
-## Solution
+A secondary possibility is that the webhook response structure doesn't match what the validation function expects, causing a silent "Invalid response structure" error.
 
-Increase the width of the time period label containers from `w-24` (96px) to `w-28` (112px) to accommodate all labels on a single line.
+## Solution: Proxy Through a Backend Function
 
-## File to Update
+Instead of calling n8n directly from the browser, route the request through a backend function. This completely eliminates CORS issues since the request to n8n happens server-side.
 
-**`src/components/tabs/DayByDayTab.tsx`** - Lines 36, 46, and 56
-
-Change `w-24` to `w-28` for all three time period containers (Morning, Afternoon, Evening) to keep them consistent:
-
-```text
-// Before (Line 36, 46, 56)
-<div className="w-24 shrink-0">
-
-// After
-<div className="w-28 shrink-0">
+```
+User's Browser --> Backend Function --> n8n Webhook --> Backend Function --> User's Browser
 ```
 
-## Alternative Option
+## Implementation Steps
 
-If you prefer even more room, `w-32` (128px) would provide additional breathing room for the labels.
+### Step 1: Create a backend function `generate-itinerary`
+
+This function will:
+- Receive the trip details from the frontend
+- Forward them to the n8n webhook server-side (no CORS issues)
+- Log the raw response for debugging
+- Return the response back to the frontend
+
+### Step 2: Update `src/services/voyagerApi.ts`
+
+- Replace the direct `fetch` to n8n with a call to the new backend function
+- Keep the existing validation and transformation logic
+- Add detailed `console.error` logging that captures the actual response body when validation fails, so we can see exactly what n8n is returning
+
+### Step 3: Add detailed error logging
+
+In the validation failure case, log the raw response data so we can see exactly what shape n8n is returning. This will help catch any structure mismatches.
+
+## Technical Details
+
+**Backend function** (`supabase/functions/generate-itinerary/index.ts`):
+- Accepts POST with `{ city, country, number_of_days, month, preferences }`
+- Forwards to `https://natisolanog.app.n8n.cloud/webhook/voyager`
+- Returns the n8n response as-is
+- Includes error handling and logging
+
+**Frontend service** (`src/services/voyagerApi.ts`):
+- Calls the backend function via the existing client instead of calling n8n directly
+- All existing validation/transform logic stays the same
+- Enhanced error logging for debugging
 
