@@ -1,6 +1,5 @@
 import { TripDetails, ItineraryData, OverviewData, DayItinerary, PlaylistSong, ChatData } from '@/types/voyager';
-
-const N8N_WEBHOOK_URL = 'https://natisolanog.app.n8n.cloud/webhook/voyager';
+import { supabase } from '@/integrations/supabase/client';
 
 // New webhook response structure
 interface N8nWebhookItem {
@@ -54,53 +53,33 @@ function transformResponse(webhookData: N8nWebhookItem): ItineraryData {
 }
 
 export async function generateItinerary(details: TripDetails): Promise<ItineraryData> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-
   try {
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const { data, error } = await supabase.functions.invoke('generate-itinerary', {
+      body: {
         city: details.city,
         country: details.country,
         number_of_days: details.numberOfDays,
         month: details.month,
         preferences: details.preferences,
-      }),
-      signal: controller.signal,
+      },
     });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      console.error('Edge function error:', error);
+      throw new Error('Failed to generate itinerary. Please try again.');
     }
-
-    const data = await response.json();
 
     if (!validateResponse(data)) {
-      throw new Error('Invalid response structure from n8n');
+      console.error('Invalid response structure. Raw data:', JSON.stringify(data, null, 2));
+      throw new Error('Invalid response structure from backend');
     }
 
-    // Take the first item from the array and transform it
     return transformResponse(data[0]);
   } catch (error) {
-    clearTimeout(timeoutId);
-    
-    // Log the error for debugging
-    console.error('n8n webhook error:', error);
-    
-    // Re-throw with a user-friendly message
+    console.error('Generate itinerary error:', error);
     if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
       throw error;
     }
-    
     throw new Error('Failed to generate itinerary. Please try again.');
   }
 }
