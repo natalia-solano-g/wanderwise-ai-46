@@ -14,7 +14,7 @@ interface ItineraryViewProps {
 }
 
 export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
-  const { city, country, days, month } = data.chat.context;
+  const { place, days, month } = data.chat.context;
   
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -38,8 +38,8 @@ export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
       {/* Hero Section */}
       <div className="relative h-80 md:h-96 overflow-hidden">
         <img
-          src={`https://source.unsplash.com/1920x800/?${city},cityscape,landmark`}
-          alt={city}
+          src={`https://source.unsplash.com/1920x800/?${place},cityscape,landmark`}
+          alt={place}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 hero-overlay" />
@@ -62,14 +62,12 @@ export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
             className="text-card"
           >
             <h1 className="text-4xl md:text-6xl font-black uppercase text-shadow mb-2">
-              {city}
+              {place}
             </h1>
             <div className="flex items-center gap-4 text-lg font-semibold text-shadow">
               <span>{days} Days</span>
               <span>•</span>
               <span>{month}</span>
-              <span>•</span>
-              <span>{country}</span>
             </div>
           </motion.div>
         </div>
@@ -105,7 +103,7 @@ export const ItineraryView = ({ data, onBack }: ItineraryViewProps) => {
         >
           {activeTab === 'overview' && <OverviewTab data={data} />}
           {activeTab === 'day-by-day' && <DayByDayTab itinerary={data.itinerary} />}
-          {activeTab === 'playlist' && <PlaylistTab playlist={data.playlist} city={city} />}
+          {activeTab === 'playlist' && <PlaylistTab playlist={data.playlist} city={place} />}
           {activeTab === 'chat' && (
             <ChatTab
               messages={chatMessages}

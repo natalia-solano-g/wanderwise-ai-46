@@ -43,8 +43,7 @@ function transformResponse(webhookData: N8nWebhookItem): ItineraryData {
     chat: {
       initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${destination.duration}-day itinerary for your trip to ${destination.city}. Feel free to ask me anything about your trip!`,
       context: {
-        city: destination.city,
-        country: destination.country,
+        place: `${destination.city}, ${destination.country}`,
         days: destination.duration,
         month: destination.month,
       },
@@ -56,8 +55,7 @@ export async function generateItinerary(details: TripDetails): Promise<Itinerary
   try {
     const { data, error } = await supabase.functions.invoke('generate-itinerary', {
       body: {
-        city: details.city,
-        country: details.country,
+        place: details.place,
         number_of_days: details.numberOfDays,
         month: details.month,
         preferences: details.preferences,
@@ -115,7 +113,7 @@ export function getFallbackItinerary(details: TripDetails): ItineraryData {
     },
     itinerary: Array.from({ length: details.numberOfDays }, (_, i) => ({
       day: i + 1,
-      title: i === 0 ? `Exploring ${details.city}` : `Day ${i + 1} Adventures`,
+      title: i === 0 ? `Exploring ${details.place}` : `Day ${i + 1} Adventures`,
       morning: 'Start your day at the historic city center. Visit the main landmarks and soak in the local atmosphere.',
       afternoon: 'Explore local markets and try authentic cuisine. Visit museums or galleries showcasing local art and history.',
       evening: 'Enjoy dinner at a recommended restaurant and experience the nightlife.',
@@ -128,10 +126,9 @@ export function getFallbackItinerary(details: TripDetails): ItineraryData {
       { title: 'Cultural Heritage', artist: 'Folk Ensemble' },
     ],
     chat: {
-      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${details.city}. Feel free to ask me anything about your trip!`,
+      initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${details.numberOfDays}-day itinerary for your trip to ${details.place}. Feel free to ask me anything about your trip!`,
       context: {
-        city: details.city,
-        country: details.country,
+        place: details.place,
         days: details.numberOfDays,
         month: details.month,
       },

@@ -6,8 +6,7 @@ export interface City {
 }
 
 export interface TripDetails {
-  city: string;
-  country: string;
+  place: string;
   numberOfDays: number;
   month: string;
   preferences: string;
@@ -48,8 +47,7 @@ export interface PlaylistSong {
 }
 
 export interface ChatContext {
-  city: string;
-  country: string;
+  place: string;
   days: number;
   month: string;
 }

@@ -11,14 +11,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { city, country, number_of_days, month, preferences } = await req.json();
+    const { place, number_of_days, month, preferences } = await req.json();
 
-    console.log('Forwarding request to n8n:', { city, country, number_of_days, month, preferences });
+    console.log('Forwarding request to n8n:', { place, number_of_days, month, preferences });
 
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ city, country, number_of_days, month, preferences }),
+      body: JSON.stringify({ place, number_of_days, month, preferences }),
     });
 
     if (!response.ok) {

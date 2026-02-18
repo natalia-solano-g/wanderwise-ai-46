@@ -23,7 +23,7 @@ export const ChatTab = ({ messages, setMessages, itineraryContext }: ChatTabProp
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { city, country, days, month } = itineraryContext.chat.context;
+  const { place, days, month } = itineraryContext.chat.context;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -50,7 +50,7 @@ export const ChatTab = ({ messages, setMessages, itineraryContext }: ChatTabProp
 
     // Simulate AI response (in production, this would call an API)
     setTimeout(() => {
-      const response = generateMockResponse(messageText, city, country, month);
+      const response = generateMockResponse(messageText, place, month);
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -164,11 +164,11 @@ export const ChatTab = ({ messages, setMessages, itineraryContext }: ChatTabProp
   );
 };
 
-function generateMockResponse(question: string, city: string, country: string, month: string): string {
+function generateMockResponse(question: string, place: string, month: string): string {
   const q = question.toLowerCase();
 
   if (q.includes('restaurant') || q.includes('food') || q.includes('eat')) {
-    return `Great question! Here are some top dining recommendations for ${city}:
+    return `Great question! Here are some top dining recommendations for ${place}:
 
 **Fine Dining:**
 - The Ivy (classic British cuisine)
@@ -186,7 +186,7 @@ Would you like specific recommendations near any attraction in your itinerary?`;
   }
 
   if (q.includes('airport') || q.includes('transport') || q.includes('get around')) {
-    return `Here are the best ways to get around ${city}:
+    return `Here are the best ways to get around ${place}:
 
 **From the Airport:**
 - Train/Metro: Usually fastest and most economical
@@ -202,7 +202,7 @@ Would you like specific recommendations near any attraction in your itinerary?`;
   }
 
   if (q.includes('hidden') || q.includes('local') || q.includes('secret')) {
-    return `Here are some hidden gems in ${city} that most tourists miss:
+    return `Here are some hidden gems in ${place} that most tourists miss:
 
 🏛️ **Lesser-known Museums:** Check smaller galleries away from main tourist areas
 
@@ -215,7 +215,7 @@ Would you like specific recommendations near any attraction in your itinerary?`;
 Would you like me to suggest specific hidden gems for any particular day of your trip?`;
   }
 
-  return `That's a great question about ${city}! 
+  return `That's a great question about ${place}! 
 
 Based on your itinerary, I'd recommend:
 - Checking local event listings for ${month}
