@@ -29,9 +29,9 @@ export const Hero = () => {
             <br />
             <span>Travel Assistant</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-xl mb-8">
-            Click anywhere on the map to start planning your perfect adventure.
-          </p>
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-xl mb-8 text-center">Just type in where you want to go, for how long, and any preferences you have! I'll make a tailored itinerary for you 
+
+        </p>
           
           {/* Feature badges */}
           <div className="flex flex-wrap gap-3">
