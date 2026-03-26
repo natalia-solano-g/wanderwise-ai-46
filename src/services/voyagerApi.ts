@@ -10,7 +10,8 @@ interface N8nWebhookItem {
     duration: number;
     month: string;
   };
-  overview: OverviewData;
+  overview?: OverviewData;
+  packing?: string[];
   itinerary: DayItinerary[];
   playlist: PlaylistSong[];
 }
@@ -26,24 +27,38 @@ function validateResponse(data: unknown): data is N8nWebhookResponse {
   return Boolean(
     destination &&
     typeof destination.city === 'string' &&
-    typeof destination.country === 'string' &&
-    item.overview &&
     Array.isArray(item.itinerary)
   );
 }
 
 // Transform webhook response to internal ItineraryData format
 function transformResponse(webhookData: N8nWebhookItem): ItineraryData {
-  const { destination, overview, itinerary, playlist } = webhookData;
+  const { destination, overview, packing, itinerary, playlist } = webhookData;
   
+  // Build overview: use overview if provided, otherwise construct from top-level packing
+  const resolvedOverview: OverviewData = overview || {
+    packing: {
+      weather: {
+        condition: 'Check local forecast',
+        temp_min: 'N/A',
+        temp_max: 'N/A',
+        humidity: 'N/A',
+        sunrise: 'N/A',
+        sunset: 'N/A',
+      },
+      items: packing || [],
+    },
+    current_news: [],
+  };
+
   return {
-    overview,
+    overview: resolvedOverview,
     itinerary,
     playlist: playlist || [],
     chat: {
       initial_message: `Hi! I'm your Voyager assistant. I've prepared a ${destination.duration}-day itinerary for your trip to ${destination.city}. Feel free to ask me anything about your trip!`,
       context: {
-        place: `${destination.city}, ${destination.country}`,
+        place: `${destination.city}${destination.country ? ', ' + destination.country : ''}`,
         days: destination.duration,
         month: destination.month,
       },
