@@ -10,7 +10,8 @@ interface N8nWebhookItem {
     duration: number;
     month: string;
   };
-  overview: OverviewData;
+  overview?: OverviewData;
+  packing?: string[];
   itinerary: DayItinerary[];
   playlist: PlaylistSong[];
 }
@@ -26,8 +27,6 @@ function validateResponse(data: unknown): data is N8nWebhookResponse {
   return Boolean(
     destination &&
     typeof destination.city === 'string' &&
-    typeof destination.country === 'string' &&
-    item.overview &&
     Array.isArray(item.itinerary)
   );
 }
