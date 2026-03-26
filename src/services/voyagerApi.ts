@@ -56,26 +56,34 @@ export async function generateItinerary(details: TripDetails): Promise<Itinerary
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
 
-    let data, error;
-    try {
-      const result = await supabase.functions.invoke('generate-itinerary', {
-        body: {
-          place: details.place,
-          number_of_days: details.numberOfDays,
-          month: details.month,
-          preferences: details.preferences,
-        },
-      });
-      data = result.data;
-      error = result.error;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    if (error) {
-      console.error('Edge function error:', error);
+    const response = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+        'apikey': supabaseKey,
+      },
+      body: JSON.stringify({
+        place: details.place,
+        number_of_days: details.numberOfDays,
+        month: details.month,
+        preferences: details.preferences,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Edge function error:', response.status, errorText);
       throw new Error('Failed to generate itinerary. Please try again.');
     }
+
+    const data = await response.json();
 
     if (!validateResponse(data)) {
       console.error('Invalid response structure. Raw data:', JSON.stringify(data, null, 2));
