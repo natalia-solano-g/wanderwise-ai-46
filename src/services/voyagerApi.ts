@@ -53,14 +53,24 @@ function transformResponse(webhookData: N8nWebhookItem): ItineraryData {
 
 export async function generateItinerary(details: TripDetails): Promise<ItineraryData> {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-itinerary', {
-      body: {
-        place: details.place,
-        number_of_days: details.numberOfDays,
-        month: details.month,
-        preferences: details.preferences,
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
+
+    let data, error;
+    try {
+      const result = await supabase.functions.invoke('generate-itinerary', {
+        body: {
+          place: details.place,
+          number_of_days: details.numberOfDays,
+          month: details.month,
+          preferences: details.preferences,
+        },
+      });
+      data = result.data;
+      error = result.error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (error) {
       console.error('Edge function error:', error);
