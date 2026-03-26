@@ -53,19 +53,37 @@ function transformResponse(webhookData: N8nWebhookItem): ItineraryData {
 
 export async function generateItinerary(details: TripDetails): Promise<ItineraryData> {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-itinerary', {
-      body: {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/generate-itinerary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+        'apikey': supabaseKey,
+      },
+      body: JSON.stringify({
         place: details.place,
         number_of_days: details.numberOfDays,
         month: details.month,
         preferences: details.preferences,
-      },
+      }),
+      signal: controller.signal,
     });
 
-    if (error) {
-      console.error('Edge function error:', error);
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Edge function error:', response.status, errorText);
       throw new Error('Failed to generate itinerary. Please try again.');
     }
+
+    const data = await response.json();
 
     if (!validateResponse(data)) {
       console.error('Invalid response structure. Raw data:', JSON.stringify(data, null, 2));
