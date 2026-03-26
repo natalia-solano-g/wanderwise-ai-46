@@ -1,90 +1,32 @@
 
 
-# Simplify Trip Form: Replace City + Country with a Single "Place" Field
+# Fix Client-Side Timeout for Slow n8n Responses
 
-## What Changes
+## Problem
+The n8n webhook takes ~27 seconds to respond. The browser/Supabase client aborts the connection before the response arrives, causing a "Failed to fetch" error even though the edge function succeeds.
 
-The current form asks for **City** and **Country** as two separate fields. This will be simplified into a single **"Place"** input where users can type any destination -- a city, country, or region (e.g., "Rome", "Japan", "Southeast Asia").
+## Solution
+Add an `AbortController` with a longer timeout (90 seconds) to the Supabase function invocation call.
 
-## Files to Update
+## File to Update
 
-### 1. `src/types/voyager.ts` -- Update the TripDetails type
-- Replace `city: string` and `country: string` with `place: string`
-- Update `ChatContext` similarly: replace `city` and `country` with `place`
+**`src/services/voyagerApi.ts`** — Update the `generateItinerary` function to pass a custom fetch signal with a 90-second timeout:
 
-### 2. `src/components/TripForm.tsx` -- Simplify the form
-- Remove the separate `city` and `country` state variables; replace with a single `place` state
-- Remove the Country input field entirely
-- Rename the City field to **"Where to?"** with placeholder like `"e.g. Rome, Japan, Southeast Asia..."`
-- Update validation to check `place.trim()` instead of both city and country
-- Send `place` in the `onSubmit` payload
-
-### 3. `src/services/voyagerApi.ts` -- Update API call and fallback
-- Send `place` instead of `city` and `country` to the edge function
-- Update `transformResponse` to use `destination.city` (or a new `destination.place` field) from the webhook response for the chat context
-- Update `getFallbackItinerary` to use `details.place` instead of `details.city`
-- Update `ChatContext` references accordingly
-
-### 4. `supabase/functions/generate-itinerary/index.ts` -- Update edge function
-- Accept `place` instead of `city` and `country` from the request body
-- Forward `place` to the n8n webhook (the n8n workflow will need to handle parsing place into the appropriate destination)
-
-### 5. `src/components/ItineraryView.tsx` -- Update hero display
-- Instead of showing `city` and `country` separately, display `place` (or use the destination data returned by the webhook, which may still contain city/country)
-- The hero title and metadata line will adapt to show whatever the webhook returns
-
-### 6. `src/pages/Index.tsx` -- No changes needed
-- Already passes `TripDetails` generically to the form and API
-
-## How the Webhook Response is Handled
-
-The n8n webhook response still returns `destination.city` and `destination.country`. This won't change on the frontend side -- the response transformation will continue to use those fields for the itinerary view. The simplification is only on the **input** side: what the user types and what gets sent to the backend.
-
-## Technical Details
-
-**TripDetails type change:**
 ```typescript
-// Before
-export interface TripDetails {
-  city: string;
-  country: string;
-  numberOfDays: number;
-  month: string;
-  preferences: string;
-}
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
 
-// After
-export interface TripDetails {
-  place: string;
-  numberOfDays: number;
-  month: string;
-  preferences: string;
-}
+const { data, error } = await supabase.functions.invoke('generate-itinerary', {
+  body: { place, number_of_days, month, preferences },
+  // @ts-ignore - signal is supported but not in types
+  signal: controller.signal,
+});
+
+clearTimeout(timeoutId);
 ```
 
-**Edge function payload change:**
-```typescript
-// Before: { city, country, number_of_days, month, preferences }
-// After:  { place, number_of_days, month, preferences }
-```
+If the `signal` option isn't supported by the Supabase client, we'll instead use a raw `fetch` call to the edge function URL with proper headers and the abort signal, bypassing `supabase.functions.invoke()`.
 
-**ChatContext update:**
-```typescript
-// Before
-export interface ChatContext {
-  city: string;
-  country: string;
-  days: number;
-  month: string;
-}
-
-// After
-export interface ChatContext {
-  place: string;
-  days: number;
-  month: string;
-}
-```
-
-**ItineraryView hero** will use `destination.city` and `destination.country` from the webhook response (unchanged), falling back to the `place` value in the chat context if needed.
+## Why This Fixes It
+The default browser fetch timeout (~30s) is shorter than n8n's processing time (~27s). By explicitly setting a 90-second timeout, we give n8n enough time to complete.
 
